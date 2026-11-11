@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "forge226": {
+      "command": "./bin/launch",
+      "args": [],
+      "cwd": "."
+    }
+  }
+}
