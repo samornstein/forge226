@@ -1,0 +1,16 @@
+{
+  "name": "forge226",
+  "version": "0.9.1",
+  "description": "Evidence-led endurance coaching, Garmin/Strava imports and interactive training calendars.",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Forge226 Coach",
+    "shortDescription": "Training plans and data",
+    "longDescription": "Persistent endurance coaching with Garmin import, Strava sync and versioned training dashboards.",
+    "developerName": "Forge226",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Help me set up my athlete profile and training data, then plan my season."
+  }
+}
