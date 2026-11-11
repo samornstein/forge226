@@ -1,0 +1,4 @@
+interface:
+  display_name: "Forge226 Coach"
+  short_description: "Advanced endurance planning, review and dashboards"
+  default_prompt: "Use $forge226-coach to review my training state and update my coaching dashboard."
