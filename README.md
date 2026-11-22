@@ -1,4 +1,4 @@
-# Forge226 Coach — local plugin 0.9.1
+# Forge226 Coach — local plugin 0.10.0
 
 This package includes the coaching skill AND working data tools. Keep the complete folder together; SKILL.md alone cannot provide the integrations.
 

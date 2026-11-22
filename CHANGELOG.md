@@ -1,3 +1,15 @@
+## 0.10.0
+
+Required and optional volume, structured workout profiles, Excel calendar export and three-profile coaching evaluation guidance.
+
+## 0.9.3
+
+Adapt source sets across swim, bike and run, verify workout arithmetic, and trace related sessions through peak and taper.
+
+## 0.9.2
+
+Compare recent readiness with relevant historical race builds and audit progression through peak and taper.
+
 # 0.9.1
 
 One shared swim, bike and run framework library with scalable main sets and phase guidance.
