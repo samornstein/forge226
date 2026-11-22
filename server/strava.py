@@ -11,7 +11,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
  def redirect_request(self,*args,**kwargs):raise ApiError('Unexpected redirect from Strava; request stopped.')
 def request_json(method,url,form=None,token=None):
  if not url.startswith('https://www.strava.com/'):raise ApiError('Invalid API host')
- headers={'Accept':'application/json','User-Agent':'Forge226Local/0.9.1'}
+ headers={'Accept':'application/json','User-Agent':'Forge226Local/0.10.0'}
  if token:headers['Authorization']='Bearer '+token
  body=urllib.parse.urlencode(form).encode() if form else None
  if body:headers['Content-Type']='application/x-www-form-urlencoded'

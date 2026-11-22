@@ -88,7 +88,7 @@ class App:
   if not tool:raise ValueError('Unknown tool')
   validate_args(args,tool['inputSchema']);a=args;aid=a.get('athlete_id');n=name.removeprefix('forge226_')
   if aid:self.store.athlete(aid)
-  if n=='status':return {'version':'0.9.1','storage':str(self.store.root),'athletes':len(self.store.athletes()),'garmin':'Official Personal API plus ZIP/JSON/CSV uploads','strava':'Local read-only OAuth; configuration and user consent required','genericImport':'Explicitly mapped CSV/JSON/ZIP workouts or wellness from any source; no universal live API','optionalData':True,'fitTcx':'Not yet supported','persistence':'Local SQLite plus separate restricted credentials; no cloud sync','garminLimits':{'activityDays':730,'activityRecordLimit':2000,'wellnessDays':90,'wellnessFields':['sleepHours','hrvMs']},'calendarViews':['month','week','day']}
+  if n=='status':return {'version':'0.10.0','storage':str(self.store.root),'athletes':len(self.store.athletes()),'garmin':'Official Personal API plus ZIP/JSON/CSV uploads','strava':'Local read-only OAuth; configuration and user consent required','genericImport':'Explicitly mapped CSV/JSON/ZIP workouts or wellness from any source; no universal live API','optionalData':True,'fitTcx':'Not yet supported','persistence':'Local SQLite plus separate restricted credentials; no cloud sync','garminLimits':{'activityDays':730,'activityRecordLimit':2000,'wellnessDays':90,'wellnessFields':['sleepHours','hrvMs']},'calendarViews':['month','week','day']}
   if n=='history_summary':
    athlete=self.store.athlete(aid);end=a.get('to_date') or datetime.now(ZoneInfo(athlete['timezone'])).date().isoformat()
    return history_summary(self.enabled_records(aid),a.get('from_date'),end)
@@ -210,7 +210,7 @@ def main():
     if ident is None:continue
     if method=='initialize':
      requested=params.get('protocolVersion');version=requested if requested in ('2024-11-05','2025-03-26','2025-06-18','2025-11-25') else '2025-06-18'
-     result={'protocolVersion':version,'capabilities':{'tools':{'listChanged':False}},'serverInfo':{'name':'forge226','version':'0.9.1'},'instructions':'Start with forge226_status and list_athletes. Keep credentials outside conversation. Never activate a plan without athlete authorization.'}
+     result={'protocolVersion':version,'capabilities':{'tools':{'listChanged':False}},'serverInfo':{'name':'forge226','version':'0.10.0'},'instructions':'Start with forge226_status and list_athletes. Keep credentials outside conversation. Never activate a plan without athlete authorization.'}
     elif method=='ping':result={}
     elif method=='tools/list':result={'tools':TOOLS}
     elif method=='tools/call':
