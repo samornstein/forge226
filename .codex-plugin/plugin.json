@@ -1,6 +1,6 @@
 {
   "name": "forge226",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "Evidence-led endurance coaching, Garmin/Strava imports and interactive training calendars.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
