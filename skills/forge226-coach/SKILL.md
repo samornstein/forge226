@@ -41,6 +41,8 @@ Read [the coaching loop](references/coaching-loop.md) when creating or revising 
 
 ## Coaching sequence
 
+Before drafting or revising a season, apply the race-demand and historical-block comparison in references/analysis.md. Carry the resulting priorities into the dated calendar and verify their progression through peak and taper.
+
 1. Establish the athlete, exact goal/race dates, evidence and schedule constraints.
 2. Assess current training, discipline-specific experience, goal feasibility and uncertainty before proposing progression. Keep time and qualification goals separate.
 3. Draft a race-specific framework with measurable block checkpoints and progression/repeat/reduction criteria; invite athlete feedback. Preserve an existing approved strategy unless change is requested or evidence calls it into question.
@@ -76,3 +78,6 @@ Before setting a volume ceiling, use `forge226_history_summary` to examine full 
 
 ## Workout design and review
 When building or revising workouts, consult [the swim, bike and run frameworks](references/workout-frameworks.md) and apply the session-design guidance in references/planning.md. Preserve the athlete's own workout preferences and sport-specific access. Render planned run work from session prescriptions in the dashboard.
+
+For each new structured workout, store an ordered profileSteps array with label, time in minutes, kind and an optional target (pace, power, HR reference or effort). Include recovery and cooldown. Preserve distances in labels and identify estimated rep times. Render these same steps in charts, prescriptions and Excel. For an optional session set baseMinutes to the required duration (zero for an entirely optional workout); minutes is the maximum. Use optionalSteps for the full alternative sequence. Omit the base sequence for a wholly optional session. Honor agreed timeAccounting.excludedSports; still schedule those sessions and respect access. Describe walking separately in Other.
+After saving a revision, compare the saved session diff to the approved scope. Render the saved version, check the version shown and inspect one changed session and its weekly totals in the calendar and Excel. For a hosted dashboard check publication succeeded and report which version is live. Exercise the three athlete profiles in tests/COACHING-TRIALS.md when evaluating a coaching release.
