@@ -68,7 +68,16 @@ def validate(s):
             covered.add(d)
             if d in allowed_sports and sport not in allowed_sports[d] and sport!='Rest': fail('Sport unavailable during exception '+str(ident))
             if not number(minutes): fail('Invalid minutes '+str(ident)); continue
-            if sport!='Rest': dailyminutes[d]+=minutes
+            counted_minutes=0 if sport in (s.get('timeAccounting') or {}).get('excludedSports',[]) else minutes
+            required=row.get('baseMinutes', minutes)
+            if not number(required) or not 0<=required<=minutes: fail('Invalid required duration '+str(ident))
+            for field, expected in [('profileSteps',required),('optionalSteps',minutes)]:
+                if field not in row: continue
+                steps=row[field]
+                if not isinstance(steps,list) or any(not isinstance(p,dict) or not p.get('label') or not number(p.get('time')) or p['time']<=0 for p in steps):
+                    fail('Invalid workout steps '+str(ident))
+                elif abs(sum(p['time'] for p in steps)-expected)>0.05: fail('Step duration mismatch '+str(ident))
+            if sport!='Rest': dailyminutes[d]+=counted_minutes
             for field in ('title','intensity','details','purpose'):
                 if not isinstance(row.get(field),str) or not row[field].strip(): fail('Missing '+field+' '+str(ident))
             if sport not in ('Swim','Bike','Run','Strength','Other','Rest','Race'): fail('Invalid sport '+str(ident))
@@ -81,8 +90,8 @@ def validate(s):
                 race_total+=minutes; race_entries+=1; trained.add(d)
             elif slot in ('AM','PM'):
                 if minutes<=0: fail('Training must have positive minutes '+str(ident))
-                slotsum[d,slot]+=minutes; trained.add(d)
-                weeks[d-timedelta(days=d.weekday())]+=minutes
+                slotsum[d,slot]+=counted_minutes; trained.add(d)
+                weeks[d-timedelta(days=d.weekday())]+=counted_minutes
             else: fail('Invalid slot '+str(ident))
         except (KeyError,TypeError,ValueError) as e: fail('Malformed session: '+str(e))
     for d,minutes in dailyminutes.items():
