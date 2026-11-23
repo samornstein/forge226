@@ -20,13 +20,13 @@ function workbookZip(files) {
   const count=directory.length/2;
   return new Blob([...parts,...directory,header(22,[[0,32,0x06054b50],[8,16,count],[10,16,count],[12,32,directory.reduce((n,b)=>n+b.length,0)],[16,32,offset]])],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 }
-function planWorkbook(plan) {
+function planWorkbook(plan, preview=false) {
   const rel='http://schemas.openxmlformats.org/officeDocument/2006/relationships', main='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
   const xml=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-  const stepText=p=>p.label+' · '+p.time+' min'+(p.target?' · '+p.target:'');
-  const rows=[['Date','Slot','Sport','Workout','Minutes','Phase','Intensity','Prescription','Purpose','Success cue','Alternative','Swim yards']];
-  for(const x of [...plan.sessions].sort((a,b)=>a.date.localeCompare(b.date)||a.slot.localeCompare(b.slot))) rows.push([x.date,x.slot,x.sport,x.title,x.minutes,plan.trainingBlocks.find(b=>b.id===x.blockId)?.focus,x.intensity,[x.details,...(x.profileSteps||[]).map(stepText),...(x.optionalSteps?.length?['Optional version',...x.optionalSteps.map(stepText)]:[])].join('\n'),x.purpose,x.successCue,x.alternative,x.distanceYards]);
-  const overview=[[plan.goal.name,'Season guide · Plan v'+plan.version],['Race day',plan.goal.raceDate],['Weekly volume','Hours cover planned endurance and active recovery. Strength follows the athlete’s time-accounting preference. Race time is excluded.'],['Workout calendar','Filter by date or sport. Times are minutes. Each row includes the prescription and execution cues.'],['Training phase','Dates and focus']];
+  const stepText=p=>p.label+(p.distance?' · '+p.distance+' '+p.unit:'')+' · '+p.time+' min'+(p.target?' · '+p.target:'');
+  const rows=[['Date','Slot','Sport','Workout','Minutes','Phase','Intensity','Prescription','Purpose','Success cue','Alternative','Swim yards','Required min','Progression']];
+  for(const x of [...plan.sessions].sort((a,b)=>a.date.localeCompare(b.date)||a.slot.localeCompare(b.slot))) rows.push([x.date,x.slot,x.sport,x.title,x.minutes,plan.trainingBlocks.find(b=>b.id===x.blockId)?.focus,x.intensity,x.structured?x.details:[x.details,...(x.profileSteps||[]).map(stepText),...(x.optionalSteps?.length?['Optional version',...x.optionalSteps.map(stepText)]:[])].join('\n'),x.purpose,x.successCue,x.alternative,x.distanceYards,x.baseMinutes??x.minutes,x.progressionFocus]);
+  const overview=[[plan.goal.name,'Season guide · Plan v'+plan.version+(preview?' · schedule preview':'')],['Race day',plan.goal.raceDate],['Weekly volume','Hours cover planned endurance and active recovery. Strength follows the athlete’s time-accounting preference. Race time is excluded.'],['Workout calendar','Filter by date or sport. Times are minutes. Each row includes the prescription and execution cues.'],['Training phase','Dates and focus']];
   for(const block of plan.trainingBlocks) overview.push([block.focus,block.startDate+' to '+block.endDate+' — '+block.rationale]);
   const weeks=new Map();
   for(const x of plan.sessions){
@@ -35,7 +35,7 @@ function planWorkbook(plan) {
     const key=day.toISOString().slice(0,10);
     const sums=weeks.get(key)||{};
     sums[x.sport]=(sums[x.sport]||0)+x.minutes;
-    if(counted(x)){sums.required=(sums.required||0)+(x.baseMinutes??x.minutes);sums.upper=(sums.upper||0)+x.minutes;}
+    if(x.sport!=='Race' && !(plan.timeAccounting?.excludedSports||[]).includes(x.sport)){sums.required=(sums.required||0)+(x.baseMinutes??x.minutes);sums.upper=(sums.upper||0)+x.minutes;}
     weeks.set(key,sums);
   }
   const weekly=[['Week beginning','Required hours','With options (hours)','Swim min','Bike min','Run min','Other min','Strength min']];
@@ -46,7 +46,7 @@ function planWorkbook(plan) {
   const tabs=[
     {name:'Season guide',data:overview,widths:[44,95]},
     {name:'Weekly volume',data:weekly,widths:[20,20,22,14,14,14,14,17]},
-    {name:'Workout calendar',data:rows,widths:[14,8,13,40,11,34,35,85,40,40,40,13]}
+    {name:'Workout calendar',data:rows,widths:[14,8,13,40,11,34,35,85,40,40,40,13,15,30]}
   ];
   const pkg='http://schemas.openxmlformats.org/package/2006';
   const mime='application/vnd.openxmlformats-officedocument.spreadsheetml.';
@@ -61,7 +61,7 @@ function planWorkbook(plan) {
     'xl/styles.xml':'<styleSheet xmlns="'+main+'"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF304D40"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="2"><xf applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf><xf fontId="1" fillId="2" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf></cellXfs></styleSheet>'
   };
   tabs.forEach(({data,widths},i)=>{
-    const body=data.map((row,n)=>'<row r="'+(n+1)+'">'+row.map((v,j)=>'<c r="'+String.fromCharCode(65+j)+(n+1)+'" s="'+(n===0||(i===0&&n===5)?1:0)+'" '+(typeof v==='number'?'><v>'+v+'</v>':'t="inlineStr"><is><t>'+xml(v)+'</t></is>')+'</c>').join('')+'</row>').join('');
+    const body=data.map((row,n)=>'<row r="'+(n+1)+'">'+row.map((v,j)=>'<c r="'+String.fromCharCode(65+j)+(n+1)+'" s="'+(n===0||(i===0&&n===4)?1:0)+'" '+(typeof v==='number'?'><v>'+v+'</v>':'t="inlineStr"><is><t>'+xml(v)+'</t></is>')+'</c>').join('')+'</row>').join('');
     const cols=widths.map((w,j)=>'<col min="'+(j+1)+'" max="'+(j+1)+'" width="'+w+'" customWidth="1"/>').join('');
     const filter=i?'<autoFilter ref="A1:'+String.fromCharCode(64+widths.length)+data.length+'"/>':'';
     files['xl/worksheets/sheet'+(i+1)+'.xml']='<worksheet xmlns="'+main+'"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" state="frozen"/></sheetView></sheetViews><cols>'+cols+'</cols><sheetData>'+body+'</sheetData>'+filter+'</worksheet>';
@@ -69,6 +69,7 @@ function planWorkbook(plan) {
   return workbookZip(files);
 }
 document.getElementById('export-plan').onclick=()=>{
- const url=URL.createObjectURL(planWorkbook(S)),a=document.createElement('a');
- a.href=url;a.download='Training-plan-v'+S.version+'.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+ const preview=changedMoves().length>0;
+ const url=URL.createObjectURL(planWorkbook(S,preview)),a=document.createElement('a');
+ a.href=url;a.download='Training-plan-v'+S.version+(preview?'-schedule-preview':'')+'.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
 };

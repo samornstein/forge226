@@ -8,6 +8,9 @@ DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
 def number(n):
     return isinstance(n,(int,float)) and not isinstance(n,bool) and math.isfinite(n) and n >= 0
 def validate(s):
+    from plan_workflow import normalize
+    try:s=normalize(s)
+    except (ValueError, TypeError, KeyError) as exc:return {'passed':False,'errors':[str(exc)]}
     errors=[]
     def fail(message): errors.append(message)
     if s.get('schemaVersion') != 1: fail('Unsupported schemaVersion')
@@ -58,7 +61,7 @@ def validate(s):
                     else: allowed_sports[d]=set(allowed)
         except (KeyError,TypeError,ValueError) as e: fail('Invalid exception: '+str(e))
     ids=set(); covered=set(); slotsum=defaultdict(float); weeks=defaultdict(float); race_total=0; race_entries=0
-    rests=set(); trained=set(); dailyminutes=defaultdict(float)
+    rests=set(); trained=set(); dailyminutes=defaultdict(float); requiredweeks=defaultdict(float)
     for row in s.get('sessions',[]):
         try:
             ident=row['id']; d=parse(row['date']); slot=row['slot']; sport=row['sport']; minutes=row['minutes']
@@ -68,6 +71,7 @@ def validate(s):
             covered.add(d)
             if d in allowed_sports and sport not in allowed_sports[d] and sport!='Rest': fail('Sport unavailable during exception '+str(ident))
             if not number(minutes): fail('Invalid minutes '+str(ident)); continue
+            if 'progressionFocus' in row and (not isinstance(row['progressionFocus'],str) or not row['progressionFocus'].strip()): fail('Invalid progression focus '+str(ident))
             counted_minutes=0 if sport in (s.get('timeAccounting') or {}).get('excludedSports',[]) else minutes
             required=row.get('baseMinutes', minutes)
             if not number(required) or not 0<=required<=minutes: fail('Invalid required duration '+str(ident))
@@ -90,8 +94,13 @@ def validate(s):
                 race_total+=minutes; race_entries+=1; trained.add(d)
             elif slot in ('AM','PM'):
                 if minutes<=0: fail('Training must have positive minutes '+str(ident))
+                if exmap.get(d,{}).get(slot,base[DAYS[d.weekday()],slot])<=0: fail('Unavailable slot '+str(ident))
+                access=(s.get('sportAccess') or {}).get(sport)
+                if access is not None and DAYS[d.weekday()]+' '+slot not in access: fail('Unavailable sport slot '+str(ident))
                 slotsum[d,slot]+=counted_minutes; trained.add(d)
-                weeks[d-timedelta(days=d.weekday())]+=counted_minutes
+                week=d-timedelta(days=d.weekday())
+                weeks[week]+=counted_minutes
+                if number(required) and sport not in (s.get('timeAccounting') or {}).get('excludedSports',[]): requiredweeks[week]+=required
             else: fail('Invalid slot '+str(ident))
         except (KeyError,TypeError,ValueError) as e: fail('Malformed session: '+str(e))
     for d,minutes in dailyminutes.items():
@@ -113,7 +122,7 @@ def validate(s):
         limit=min(capacity_week,cap) if cap is not None else capacity_week
         if minutes>limit: fail(f'Week {week}: {minutes:g} exceeds cap {limit:g}')
     errors.extend(validate_coaching(s))
-    return {'passed':not errors,'errors':errors,'weeklyTrainingMinutes':{str(k):v for k,v in sorted(weeks.items())},'raceMinutes':race_total,'scope':'Structural and time constraints only; coaching review required.'}
+    return {'passed':not errors,'errors':errors,'weeklyTrainingMinutes':{str(k):v for k,v in sorted(weeks.items())},'weeklyRequiredMinutes':{str(k):requiredweeks[k] for k in sorted(weeks)},'raceMinutes':race_total,'scope':'Structural and time constraints only; coaching review required.'}
 if __name__=='__main__':
     try:
         result=validate(json.load(open(sys.argv[1])))

@@ -1,3 +1,7 @@
+## 0.11.0
+
+Planning briefs, race-block comparisons, linked progression, structured repeats and distance, plan-only hosting, schedule previews and version-checked move drafts.
+
 ## 0.10.0
 
 Required and optional volume, structured workout profiles, Excel calendar export and three-profile coaching evaluation guidance.

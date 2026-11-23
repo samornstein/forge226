@@ -63,3 +63,17 @@ Generate a different athlete's calendar with different phase count/dates. Check 
 
 ## Three-profile season comparison
 Use a common 70.3 date, six months of preparation and a mid-build travel week. Generate a full dated plan per athlete. Give the beginner three hours of recent weekly exercise and a 50 m comfortable swim. Give the experienced swimmer a competitive pool background, six months out of the water and two easy runs weekly. Give the experienced triathlete both an older comparable race block and a recent full-distance build. Use separate temporary stores. Compare opening sessions, progression after travel, peak long sessions, and taper dates. Record the actual sets and time between comparable sessions. Flag interchangeable prescriptions, missing recovery, lost peak stimuli, inconsistent units, or personalized caps leaking between athletes. Check the published version, an edited interval, and optional weekly volume against the workbook.
+
+### 0.11.0 paired draft evaluation
+
+Ran the 0.10.0 and revised coaching instructions in separate ephemeral Codex sessions for each synthetic profile. Both versions received the same facts within each pair, a January 4 start, June 20 event and March 1–7 travel. Each output included a full 24-week calendar. The comparison reviewed first-draft decisions. It did not exercise a real athlete or measure the number of conversations to approval.
+
+| Athlete | Prior draft | Revised draft | Review finding |
+| --- | --- | --- | --- |
+| First-time 70.3, 50 m continuous swim, three recent hours/week | Opened at 3h05. The peak rehearsal week included 155 minutes riding and 20 minutes run/walk, plus transition. | Opened at 3h. The conditional peak totaled 8h25 and explicitly budgeted the 180-minute Saturday between riding, transition and run/walk. | Both versions scaled the opening. An earlier ambiguous trial exposed a guessed distance and a possible misreading of the weekly baseline. The guidance now calls for resolving the goal distance and distinguishing recent hours from availability. Repeated the pair with both facts explicit. |
+| Returning competitive swimmer, first 70.3 | Scheduled three travel runs totaling 1h40, with permission in prose to shorten. | Scheduled two required 30-minute runs and a clearly optional 25-minute third run. Capped the opening long ride at the longest recent comfortable ride. | The required calendar reflects established run frequency, and the optional time is visible. |
+| Experienced triathlete changing distances | Opened at 6h and used threshold work and bricks, with a 9h40 conditional peak. | Opened at 6h, identified an unspecified sport in the prior threshold evidence, and linked 30, 40 and 60 broken race-effort minutes to a later continuous 60-minute rehearsal. Conditional peak was 9h50. | Both respected the available ten-hour ceiling. The revised draft made the purpose of the late progression easier to trace. |
+
+One discrepancy survived the revised prose draft. The experienced athlete’s January 11 row adds to 370 minutes and the model printed 365. Calendar and workbook totals therefore come from the saved session durations. Cross-check any narrative weekly table against those totals before delivery.
+
+For a real season, count the versions to framework and calendar approval, record athlete-requested scope changes separately, and note how often an already-supplied constraint or source workout needed a second correction. Compare like goals and experience levels over successive seasons.
