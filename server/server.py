@@ -2,7 +2,7 @@
 """Forge226 MCP stdio server. Python 3.10+, standard library only."""
 import sys,os,json,hashlib,secrets,traceback
 from pathlib import Path
-from datetime import datetime,date
+from datetime import datetime,date,timedelta
 from zoneinfo import ZoneInfo
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'skills/forge226-coach/scripts'))
@@ -33,6 +33,7 @@ TOOLS=[
  spec('garmin_preview','Read a supplied Garmin ZIP/JSON/CSV and report normalization, warnings and a digest. No records saved. Ambiguous units need an explicit unit choice.',{'athlete_id':S,'path':S,'units':{'type':'string','enum':['auto','seconds_meters','milliseconds_centimeters']},'distance_unit':{'type':'string','enum':['km','mi','m']}},('athlete_id','path')),
  spec('garmin_import','Import the exact previewed export by expected_sha256. Upserts by source ID and preserves unmatched history. Rejects partial imports unless allow_partial is explicitly true after explaining rejected rows.',{'athlete_id':S,'path':S,'expected_sha256':S,'units':{'type':'string','enum':['auto','seconds_meters','milliseconds_centimeters']},'distance_unit':{'type':'string','enum':['km','mi','m']},'allow_partial':{'type':'boolean'}},('athlete_id','path','expected_sha256'),False),
  spec('list_activities','Read paginated normalized activities for this athlete. Optional inclusive date range.',{'athlete_id':S,'from_date':S,'to_date':S,'offset':I,'limit':I},('athlete_id',)),
+ spec('compare_builds','Compare dated readiness, comparable-race and historical-capacity windows using available activity summaries.',{'athlete_id':S,'windows':O},('athlete_id','windows')),
  spec('history_summary','Inspect all imported training across a chosen window: observed high-volume weeks, training days versus files, weekday patterns and possible race weeks. Does not infer sustainable fitness.',{'athlete_id':S,'from_date':S,'to_date':S},('athlete_id',)),
  spec('garmin_sync_all','Explicit all-supported-data import: activity summaries (default 730 days) and sleep duration/overnight average HRV (default 90 days). Report per-dataset success/failure; not every Garmin metric. Use only when the athlete requests all supported data.',{'athlete_id':S,'activity_days':I,'wellness_days':I},('athlete_id',),False),
  spec('analyze','Calculate weekly volume, sport frequency, coverage-qualified four-week comparisons and benchmark history. No inferred fitness, mixed-scale scores or race prediction.',{'athlete_id':S,'as_of':S},('athlete_id',)),
@@ -40,8 +41,10 @@ TOOLS=[
  spec('analyze_session','Analyze an explicitly normalized JSON lap file for a selected stored activity. Optional comparison: firstLapIds, secondLapIds, context. Descriptive lap metrics only; no FIT/stream ingestion or inferred physiological scores.',{'athlete_id':S,'activity_id':S,'path':S,'comparison':O},('athlete_id','activity_id','path')),
  spec('save_checkin','Persist a dated readiness report. Does not alter the plan.',{'athlete_id':S,'checkin':O},('athlete_id','checkin'),False),
  spec('get_context','Read saved profile, recent check-ins, import receipts, connection status and plan version list. Does not disclose tokens.',{'athlete_id':S},('athlete_id',)),
+ spec('review_progressions','Trace dated key sessions by sport and purpose, with days between exposures and athlete-specific dose where recorded.',{'athlete_id':S,'version':I},('athlete_id',)),
  spec('get_plan','Read active plan or a specific saved version.',{'athlete_id':S,'version':I},('athlete_id',)),
  spec('save_plan_draft','Save a full canonical state as a versioned draft and validate it. Does not activate. parent_version must match current active version, or null for first plan.',{'athlete_id':S,'state':O,'parent_version':{'type':['integer','null']}},('athlete_id','state','parent_version'),False),
+ spec('prepare_schedule_change','Validate a schedule preview against the active version and save a reviewable draft.',{'athlete_id':S,'request':O},('athlete_id','request'),False),
  spec('activate_plan','Activate a validated, reviewed draft after athlete authorization. expected_active must match current active version or null.',{'athlete_id':S,'version':I,'expected_active':{'type':['integer','null']}},('athlete_id','version','expected_active'),False),
  spec('export_dashboard','Generate HTML and portable state from the selected saved plan with latest evidence/check-ins. No external publishing. Returns absolute file paths.',{'athlete_id':S,'version':I},('athlete_id',),False),
  spec('garmin_status','Read last verified Garmin Personal API connection status, token expiry and sync receipts. Does not expose secrets or contact Garmin.',{'athlete_id':S},('athlete_id',)),
@@ -88,7 +91,10 @@ class App:
   if not tool:raise ValueError('Unknown tool')
   validate_args(args,tool['inputSchema']);a=args;aid=a.get('athlete_id');n=name.removeprefix('forge226_')
   if aid:self.store.athlete(aid)
-  if n=='status':return {'version':'0.10.0','storage':str(self.store.root),'athletes':len(self.store.athletes()),'garmin':'Official Personal API plus ZIP/JSON/CSV uploads','strava':'Local read-only OAuth; configuration and user consent required','genericImport':'Explicitly mapped CSV/JSON/ZIP workouts or wellness from any source; no universal live API','optionalData':True,'fitTcx':'Not yet supported','persistence':'Local SQLite plus separate restricted credentials; no cloud sync','garminLimits':{'activityDays':730,'activityRecordLimit':2000,'wellnessDays':90,'wellnessFields':['sleepHours','hrvMs']},'calendarViews':['month','week','day']}
+  if n=='status':return {'version':'0.11.0','storage':str(self.store.root),'athletes':len(self.store.athletes()),'garmin':'Official Personal API plus ZIP/JSON/CSV uploads','strava':'Local read-only OAuth; configuration and user consent required','genericImport':'Explicitly mapped CSV/JSON/ZIP workouts or wellness from any source; no universal live API','optionalData':True,'fitTcx':'Not yet supported','persistence':'Local SQLite plus separate restricted credentials; no cloud sync','garminLimits':{'activityDays':730,'activityRecordLimit':2000,'wellnessDays':90,'wellnessFields':['sleepHours','hrvMs']},'calendarViews':['month','week','day']}
+  if n=='compare_builds':
+   from analysis import compare_builds
+   return compare_builds(self.enabled_records(aid),a['windows'])
   if n=='history_summary':
    athlete=self.store.athlete(aid);end=a.get('to_date') or datetime.now(ZoneInfo(athlete['timezone'])).date().isoformat()
    return history_summary(self.enabled_records(aid),a.get('from_date'),end)
@@ -157,8 +163,27 @@ class App:
    return analyze_laps(a['path'],activity,a.get('comparison'))
   if n=='save_checkin':return self.store.checkin(aid,a['checkin'])
   if n=='get_context':return {'athlete':self.store.athlete(aid),'activeVersion':self.store.active_version(aid),'versions':self.versions(aid),'checkins':self.store.checkins(aid),'imports':self.store.receipts(aid),'strava':self.strava.status(aid),'sources':self.source_context(aid)}
+  if n=='review_progressions':
+   from plan_workflow import progression_summary
+   plan=self.store.plan(aid,a.get('version'))
+   if not plan:raise ValueError('No saved plan available')
+   state=plan['state']
+   return {'version':state['version'],'progressions':progression_summary(state),'note':'Coverage reflects labeled exposures. Review gaps alongside travel, recovery and taper.'}
   if n=='get_plan':return self.store.plan(aid,a.get('version')) or {'plan':None}
   if n=='save_plan_draft':return self.store.draft(aid,a['state'],a['parent_version'])
+  if n=='prepare_schedule_change':
+   from plan_workflow import move_sessions
+   from check_state import validate
+   plan=self.store.plan(aid)
+   if not plan:raise ValueError('No active plan')
+   state=move_sessions(plan['state'],a['request'])
+   today=datetime.now(ZoneInfo(state['timezone'])).date()
+   state.setdefault('reviewDecisions',[]).append({'date':str(today),'nextReviewDate':str(today+timedelta(days=7)),'action':'reschedule','reason':'Athlete schedule request','changes':'Review requested dates and slots','evidence':'Version-matched schedule preview'})
+   check=validate(state)
+   if not check['passed']:raise ValueError('; '.join(check['errors'][:8]))
+   state['review']={'type':'self-review','decision':'pending','issues':[]}
+   state.setdefault('changes',[]).append({'cause':'schedule change','reason':'Athlete schedule preview','scope':'session','moves':a['request']['moves']})
+   return self.store.draft(aid,state,plan['state']['version'])
   if n=='activate_plan':return self.store.activate(aid,a['version'],a['expected_active'])
   if n=='export_dashboard':
    plan=self.store.plan(aid,a.get('version'))
@@ -171,7 +196,9 @@ class App:
    state['exportedAt']=now()
    output=self.store.root/'exports'/aid/(str(state['version'])+'-'+secrets.token_hex(4));output.mkdir(parents=True,mode=0o700)
    page=render(state);(output/'training-dashboard.html').write_text(page);(output/'athlete-state.json').write_text(json.dumps(state,indent=2,allow_nan=False))
-   return {'version':state['version'],'status':state['status'],'html':str(output/'training-dashboard.html'),'state':str(output/'athlete-state.json'),'note':'Snapshot generated from stored plan and latest imported evidence. No automatic publishing or cross-file sync.'}
+   from calendar_view import share_html
+   (output/'plan-only.html').write_text(share_html(state))
+   return {'shareHtml':str(output/'plan-only.html'),'version':state['version'],'status':state['status'],'html':str(output/'training-dashboard.html'),'state':str(output/'athlete-state.json'),'note':'Snapshot generated from stored plan and latest imported evidence. No automatic publishing or cross-file sync.'}
   if n=='garmin_status':return self.garmin.status(aid)
   if n=='garmin_connect':
    self.require_source(aid,'garmin');return self.garmin.begin(aid)
@@ -210,7 +237,7 @@ def main():
     if ident is None:continue
     if method=='initialize':
      requested=params.get('protocolVersion');version=requested if requested in ('2024-11-05','2025-03-26','2025-06-18','2025-11-25') else '2025-06-18'
-     result={'protocolVersion':version,'capabilities':{'tools':{'listChanged':False}},'serverInfo':{'name':'forge226','version':'0.10.0'},'instructions':'Start with forge226_status and list_athletes. Keep credentials outside conversation. Never activate a plan without athlete authorization.'}
+     result={'protocolVersion':version,'capabilities':{'tools':{'listChanged':False}},'serverInfo':{'name':'forge226','version':'0.11.0'},'instructions':'Start with forge226_status and list_athletes. Keep credentials outside conversation. Never activate a plan without athlete authorization.'}
     elif method=='ping':result={}
     elif method=='tools/list':result={'tools':TOOLS}
     elif method=='tools/call':

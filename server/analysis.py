@@ -201,3 +201,30 @@ def history_summary(rows, from_date=None, to_date=None):
             'highestObservedWeeks':sorted(full,key=lambda w:w['observedHours'],reverse=True)[:12],
             'duplicateCandidates':candidates,'totalsProvisional':bool(candidates),
             'note':'Compare recent re-entry with repeated historical blocks and weekday patterns. Files are not sessions: warm-up/cooldown splits can inflate record counts. Possible race weeks are not peak training evidence until reviewed. No record is not proof of rest; prior volume is not current readiness.'}
+
+
+def compare_builds(rows, windows):
+    """Summarize chosen training blocks without treating unobserved weeks as rest."""
+    from statistics import median
+    roles = {'readiness', 'comparableRace', 'historicalCapacity'}
+    if not isinstance(windows, dict) or not windows or set(windows) - roles:
+        raise ValueError('Choose readiness, comparableRace or historicalCapacity windows')
+    result = {}
+    for role, window in windows.items():
+        if not isinstance(window, dict) or not all(isinstance(window.get(k), str) for k in ('startDate', 'endDate')):
+            raise ValueError('Each history window needs startDate and endDate in YYYY-MM-DD format')
+        begin = date.fromisoformat(window['startDate'])
+        end = date.fromisoformat(window['endDate'])
+        if end < begin:
+            raise ValueError('Window ends before its start')
+        summary = history_summary(rows, begin.isoformat(), end.isoformat())
+        weeks = summary['observedWeeks']
+        interior = [w for w in weeks if begin <= date.fromisoformat(w['weekStart'])
+                    and date.fromisoformat(w['weekStart']) + timedelta(days=6) <= end]
+        result[role] = dict(startDate=str(begin), endDate=str(end), records=summary['activityCount'],
+                            observedWeeks=len(weeks), interiorObservedWeeks=len(interior),
+                            medianRecordedWeeklyHours=median(w['observedHours'] for w in interior) if interior else None,
+                            recordedHoursBySport={sport:round(sum(w['hoursBySport'].get(sport,0) for w in weeks),2)
+                                                  for sport in sorted({k for w in weeks for k in w['hoursBySport']})},
+                            provisional=summary['totalsProvisional'])
+    return {'windows':result,'coverageNote':'Interior weeks exclude partial boundary weeks; missing records do not establish rest. Interpret each window in its race and recovery context.'}

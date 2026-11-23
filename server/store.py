@@ -82,6 +82,8 @@ class Store:
   return {'state':state,'validation':json.loads(r[1])}
  def draft(self,aid,state,parent):
   from check_state import validate
+  from plan_workflow import normalize,session_diff
+  state=normalize(state)
   athlete=self.athlete(aid)
   if state.get('athleteId') not in (None,aid):raise ValueError('Plan belongs to a different athlete.')
   if state.get('timezone')!=athlete['timezone']:raise ValueError('Plan timezone must match athlete timezone.')
@@ -93,7 +95,9 @@ class Store:
    state={**state,'athleteId':aid,'version':version,'parentVersion':parent,'status':'draft','generatedAt':now()}
    check=validate(state)
    db.execute('INSERT INTO plans VALUES(?,?,?,?,?,?)',(aid,version,parent,encode(state),encode(check),now()))
-  return {'version':version,'status':'draft','validation':check}
+  result={'version':version,'status':'draft','validation':check}
+  if parent is not None:result['sessionChanges']=session_diff(self.plan(aid,parent)['state'],state)
+  return result
  def activate(self,aid,version,expected_active):
   from check_state import validate
   self.athlete(aid)

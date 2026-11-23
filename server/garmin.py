@@ -16,7 +16,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 def request(method,url,authorization,text=False):
  parsed=urllib.parse.urlsplit(url)
  if parsed.scheme!='https' or parsed.netloc not in ('personal.connectapi.garmin.com','personal.connectapi.garmin.cn') or parsed.username or parsed.fragment:raise GarminError('Unsupported Garmin API destination')
- req=urllib.request.Request(url,method=method,headers={'Authorization':authorization,'Accept':'text/plain' if text else 'application/json','User-Agent':'Forge226Local/0.10.0'})
+ req=urllib.request.Request(url,method=method,headers={'Authorization':authorization,'Accept':'text/plain' if text else 'application/json','User-Agent':'Forge226Local/0.11.0'})
  try:
   with urllib.request.build_opener(NoRedirect(), https_handler()).open(req,timeout=25) as response:
    if response.status==204:return None
