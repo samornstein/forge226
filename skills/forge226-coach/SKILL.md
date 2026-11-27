@@ -88,3 +88,7 @@ New structured sessions use workout = {sport, steps, optionalSteps?}. Steps are 
 Use forge226_compare_builds for dated readiness, comparableRace and historicalCapacity windows when suitable records exist. Label the reason for each date range and interpret missing coverage.
 
 Use forge226_review_progressions on the saved draft. Inspect spacing and dose for each agreed priority through the final specific week and taper. Use progressionNote to explain an intentional gap, step up, repeat or easier exposure. Reconcile prose totals with validate().weeklyRequiredMinutes and weeklyTrainingMinutes before presenting any first draft or revision.
+
+## Reactive training review
+
+Use `forge226_tracking_review` for a completed week and `forge226_tracking_sync` when the athlete requests a Garmin refresh. The private Tracking dashboard can be started with `bin/tracking.command` on the athlete's Mac. Use its dated thresholds and source coverage to qualify load, performance, and readiness estimates. Review failed or missing key workouts alongside recovery and schedule context before suggesting an adjustment. Preserve the current active plan until the athlete approves a specific revision. Review `trackingLessons` from athlete context before a new plan. Use observed outcomes to refine personal scheduling and training assumptions, while keeping athlete evidence out of reusable package guidance.
