@@ -1,5 +1,12 @@
 ## 0.11.0
 
+## 0.12.0
+
+- Added private Garmin training tracking, original FIT import, backup and portable export.
+- Added weekly execution review, estimated load and the taper forecast, performance benchmarks, and race evidence.
+- Added approval-based local plan revisions and saved lessons for future plans.
+
+
 Planning briefs, race-block comparisons, linked progression, structured repeats and distance, plan-only hosting, schedule previews and version-checked move drafts.
 
 ## 0.10.0

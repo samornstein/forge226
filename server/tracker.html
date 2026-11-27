@@ -1,0 +1,2769 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Training tracker · Forge226</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f4f3ed;
+        --white: #fff;
+        --ink: #202820;
+        --muted: #526151;
+        --line: #d8ddd2;
+        --pine: #344a38;
+        --pale: #e7eee4;
+        --clay: #a64629;
+        --swim: #197773;
+        --bike: #36648c;
+        --run: #ad4f31;
+        --strength: #795e89;
+        --other: #747c68;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font:
+          15px/1.52 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+      button,
+      select,
+      input,
+      textarea {
+        font: inherit;
+        color: inherit;
+      }
+      button,
+      select,
+      input,
+      textarea {
+        border: 1px solid #bcc6b9;
+        border-radius: 8px;
+        padding: 0.49rem 0.76rem;
+        background: white;
+      }
+      button,
+      select,
+      summary {
+        cursor: pointer;
+      }
+      button:hover,
+      button:focus-visible,
+      summary:hover {
+        background: #edf1e9;
+      }
+      :focus-visible {
+        outline: 3px solid #ad572b;
+        outline-offset: 3px;
+      }
+      button:disabled,
+      input:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
+      button.primary {
+        color: white;
+        background: var(--pine);
+        border-color: var(--pine);
+      }
+      button.primary:hover {
+        background: #223a28;
+      }
+      button.quiet {
+        background: none;
+        border-color: transparent;
+        color: var(--pine);
+        text-decoration: underline;
+      }
+      button[aria-pressed="true"] {
+        border-color: var(--pine);
+        background: var(--pine);
+        color: #fff;
+      }
+      button.round {
+        padding: 0 0.78rem;
+        font-size: 1.2rem;
+      }
+      input[type="date"] {
+        min-width: 0;
+      }
+      textarea {
+        width: 100%;
+        min-height: 64px;
+      }
+      input[type="checkbox"] {
+        width: 1.1rem;
+        height: 1.1rem;
+        accent-color: var(--pine);
+      }
+      a {
+        color: var(--pine);
+      }
+      .shell {
+        max-width: 1370px;
+        margin: 0 auto;
+        padding: 24px clamp(14px, 3vw, 46px) 65px;
+      }
+      .mast,
+      .bar,
+      .row,
+      .tools,
+      .mix,
+      .chart-tools,
+      .legend,
+      .picker {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .mast,
+      .bar,
+      .row {
+        justify-content: space-between;
+      }
+      .mast {
+        padding: 4px 0 19px;
+        border-bottom: 1px solid var(--line);
+      }
+      .mast a {
+        font-weight: 650;
+        text-decoration: none;
+        border-bottom: 1px solid #a5b1a1;
+      }
+      .brand {
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        color: var(--pine);
+      }
+      .hint,
+      .small,
+      .muted {
+        color: var(--muted);
+      }
+      .small,
+      small {
+        font-size: 0.84rem;
+      }
+      .hint,
+      .muted {
+        margin: 0.3rem 0;
+      }
+      .bar {
+        align-items: flex-end;
+        margin: 26px 0 12px;
+      }
+      .period {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        flex-wrap: wrap;
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font-size: clamp(2rem, 4.2vw, 3.6rem);
+        letter-spacing: -0.055em;
+        line-height: 1.05;
+      }
+      h2 {
+        font-size: clamp(1.3rem, 2vw, 1.75rem);
+        letter-spacing: -0.035em;
+      }
+      h3 {
+        font-size: 1.08rem;
+        letter-spacing: -0.018em;
+      }
+      h4 {
+        font-size: 0.94rem;
+      }
+      .tabs {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding: 9px 2px 12px;
+        margin: 8px 0 8px;
+      }
+      .tabs button,
+      .picker button {
+        white-space: nowrap;
+      }
+      .tabs button {
+        border-radius: 30px;
+      }
+      .status {
+        min-height: 1.25rem;
+        color: var(--pine);
+        font-size: 0.88rem;
+        margin: 3px 0;
+      }
+      .status.error {
+        color: #943d26;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin: 12px 0;
+      }
+      .metric,
+      .panel,
+      .card {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+      }
+      .metric {
+        padding: 15px 18px;
+        min-width: 0;
+      }
+      .metric strong {
+        display: block;
+        font-size: clamp(1.55rem, 3vw, 2.4rem);
+        line-height: 1.18;
+        letter-spacing: -0.04em;
+      }
+      .metric span,
+      .metric small {
+        color: var(--muted);
+      }
+      .metric.focus {
+        background: var(--pine);
+        color: white;
+        border-color: var(--pine);
+      }
+      .metric.focus span,
+      .metric.focus small {
+        color: #e0e7da;
+      }
+      .panel {
+        padding: clamp(14px, 2.1vw, 24px);
+        margin: 14px 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .grid > .panel {
+        margin: 0;
+      }
+      .card {
+        padding: 14px;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+        gap: 12px;
+        margin-top: 14px;
+      }
+      .card b {
+        display: block;
+        font-size: 1.17rem;
+      }
+      .scroll {
+        overflow-x: auto;
+        margin: 8px 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-variant-numeric: tabular-nums;
+      }
+      th,
+      td {
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        font-size: 0.78rem;
+        color: var(--muted);
+        font-weight: 650;
+      }
+      th:first-child,
+      td:first-child {
+        padding-left: 0;
+      }
+      th:last-child,
+      td:last-child {
+        padding-right: 0;
+      }
+      .discipline {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+        background: var(--other);
+      }
+      .run {
+        background: var(--run);
+      }
+      .bike {
+        background: var(--bike);
+      }
+      .swim {
+        background: var(--swim);
+      }
+      .strength {
+        background: var(--strength);
+      }
+      .pill {
+        display: inline-block;
+        border-radius: 20px;
+        background: #edf0e9;
+        color: var(--pine);
+        padding: 2px 8px;
+        font-size: 0.77rem;
+        font-weight: 600;
+      }
+      .pill.partial,
+      .pill.missed {
+        background: #f6e6dc;
+        color: #804026;
+      }
+      .entry {
+        display: flex;
+        width: 100%;
+        gap: 12px;
+        align-items: center;
+        text-align: left;
+        background: white;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        border-radius: 0;
+        padding: 12px 2px;
+      }
+      .entry .summary {
+        flex: 1;
+        min-width: 0;
+      }
+      .entry small {
+        display: block;
+        color: var(--muted);
+      }
+      .entry time {
+        font-variant-numeric: tabular-nums;
+        font-size: 0.83rem;
+        min-width: 46px;
+      }
+      .entry strong {
+        display: block;
+      }
+      .entry:last-child {
+        border-bottom: 0;
+      }
+      .empty {
+        color: var(--muted);
+        padding: 0.8rem 0;
+      }
+      .legend {
+        font-size: 0.81rem;
+        color: var(--muted);
+      }
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .legend i {
+        display: inline-block;
+        width: 16px;
+        height: 0;
+        border-top: 3px solid currentColor;
+      }
+      .chart {
+        width: 100%;
+        height: 265px;
+        display: block;
+      }
+      .chart-tools {
+        margin: 0.8rem 0;
+      }
+      .field {
+        display: grid;
+        gap: 4px;
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        font-weight: 400;
+        width: 100%;
+        min-width: 0;
+      }
+      .fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .wide {
+        grid-column: 1/-1;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+      .checks {
+        display: grid;
+        gap: 5px;
+        max-height: 16rem;
+        overflow: auto;
+      }
+      .checks label {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 0.3rem 0;
+      }
+      .checks input {
+        flex: none;
+      }
+      .week-title {
+        font-weight: 650;
+      }
+      .callout {
+        border-left: 3px solid var(--clay);
+        padding: 8px 12px;
+        background: #fcf6ef;
+        margin: 10px 0;
+      }
+      .review-item {
+        border-top: 1px solid var(--line);
+        padding: 11px 0;
+      }
+      .review-item:first-of-type {
+        margin-top: 10px;
+      }
+      .group {
+        margin-top: 14px;
+      }
+      .date-label {
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 0.73rem;
+        font-weight: 750;
+        color: var(--muted);
+      }
+      ul {
+        padding-left: 1.1rem;
+        margin: 0.5rem 0;
+      }
+      li + li {
+        margin-top: 0.35rem;
+      }
+      .foot {
+        font-size: 0.84rem;
+        color: var(--muted);
+        margin: 0.5rem 0;
+      }
+      dialog {
+        width: min(660px, calc(100% - 22px));
+        max-height: 86vh;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        color: var(--ink);
+        padding: 0;
+        background: white;
+        box-shadow: 0 18px 70px #10181034;
+      }
+      dialog::backdrop {
+        background: #18231aae;
+      }
+      .dialog-head {
+        position: sticky;
+        top: 0;
+        background: white;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--line);
+        z-index: 1;
+      }
+      .dialog-body {
+        padding: 18px 20px;
+      }
+      .dialog-body section + section {
+        border-top: 1px solid var(--line);
+        padding-top: 13px;
+        margin-top: 13px;
+      }
+      summary {
+        padding: 6px 0;
+        color: var(--pine);
+        font-weight: 600;
+      }
+      .scroll-table {
+        max-height: 380px;
+        overflow: auto;
+      }
+      .scroll-table thead {
+        position: sticky;
+        top: 0;
+        background: white;
+      }
+      .file {
+        display: none;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 760px) {
+        .stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .bar {
+          align-items: flex-start;
+        }
+        .tabs {
+          margin-top: 4px;
+        }
+        .shell {
+          padding: 14px 12px 36px;
+        }
+        .metric,
+        .panel {
+          padding: 13px;
+        }
+        .entry {
+          gap: 6px;
+        }
+        .fields {
+          grid-template-columns: 1fr;
+        }
+        .chart {
+          height: 210px;
+        }
+      }
+      @media print {
+        button,
+        .tabs,
+        .tools,
+        .status,
+        dialog,
+        .chart-tools {
+          display: none !important;
+        }
+        .shell {
+          max-width: none;
+        }
+        .panel,
+        .metric {
+          break-inside: avoid;
+        }
+        .chart {
+          height: 200px;
+        }
+      }
+
+      .week-volume {
+        margin: 0.9rem 0 1.15rem;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px 20px;
+      }
+      .volume-heading {
+        grid-column: 1/-1;
+        color: var(--muted);
+        font-size: 0.83rem;
+      }
+      .volume-cell {
+        min-width: 0;
+      }
+      .volume-time {
+        float: right;
+        color: var(--muted);
+        font-size: 0.84rem;
+        font-variant-numeric: tabular-nums;
+      }
+      .volume-track {
+        background: #f2f2ec;
+        border-radius: 4px;
+        height: 9px;
+        position: relative;
+        overflow: hidden;
+        margin-top: 5px;
+      }
+      .volume-track > span {
+        position: absolute;
+        inset: 0 auto 0 0;
+      }
+      .target-fill {
+        background: #d8dfd4;
+      }
+      .observed-fill {
+        border-radius: 3px;
+      }
+      @media (max-width: 650px) {
+        .week-volume {
+          grid-template-columns: 1fr;
+        }
+        .volume-heading {
+          grid-column: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="mast">
+        <div class="brand">FORGE226</div>
+        <div class="tools">
+          <a href="/plan" target="_blank" rel="noopener">Open plan</a
+          ><span id="version" class="small"></span
+          ><button id="upload">Import FIT</button
+          ><input id="fit-file" class="file" type="file" accept=".fit" /><button
+            class="primary"
+            id="sync"
+          >
+            Sync Garmin
+          </button>
+        </div>
+      </header>
+      <div class="bar">
+        <div>
+          <h1>Training tracker</h1>
+          <p class="hint" id="freshness">Loading training records…</p>
+        </div>
+        <div class="period">
+          <button class="round" id="previous" aria-label="Previous week">
+            ‹</button
+          ><label class="small">Week of <input type="date" id="week" /></label
+          ><button class="round" id="next" aria-label="Next week">›</button
+          ><button id="today">This week</button>
+        </div>
+      </div>
+      <nav class="tabs" id="tabs" aria-label="Tracking views"></nav>
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+      <div id="view" aria-busy="true"></div>
+    </main>
+    <dialog id="dialog" aria-labelledby="dialog-title">
+      <div class="row dialog-head">
+        <h2 id="dialog-title"></h2>
+        <button id="close" aria-label="Close dialog">Close ×</button>
+      </div>
+      <div class="dialog-body" id="dialog-content"></div>
+    </dialog>
+    <script>
+      "use strict";
+      const TOKEN = __TRACKER_TOKEN__;
+      const $ = (id) => document.getElementById(id);
+      const pages = [
+        "Week",
+        "Workouts",
+        "Training load",
+        "Performance",
+        "Race readiness",
+        "Recovery",
+        "Weekly review",
+      ];
+      const state = {
+        snapshot: null,
+        tab: "Week",
+        sport: "All",
+        pmcSport: "All",
+        health: "hrvMs",
+        range: 84,
+        busy: false,
+      };
+      let readId = 0;
+      function el(tag, props = {}, ...children) {
+        const n = document.createElement(tag);
+        for (const [k, v] of Object.entries(props)) {
+          if (v === undefined || v === null) continue;
+          if (k === "class") n.className = v;
+          else if (k.startsWith("on"))
+            n.addEventListener(k.slice(2).toLowerCase(), v);
+          else if (k === "style") Object.assign(n.style, v);
+          else if (k in n && !k.startsWith("aria")) n[k] = v;
+          else n.setAttribute(k, v);
+        }
+        for (const child of children.flat(Infinity)) {
+          if (child !== null && child !== undefined)
+            n.append(
+              child instanceof Node
+                ? child
+                : document.createTextNode(String(child)),
+            );
+        }
+        return n;
+      }
+      const btn = (label, click, cls = "") =>
+        el("button", { type: "button", class: cls, onclick: click }, label);
+      const text = (v, cls = "") => el("p", { class: cls }, v);
+      const msg = (v) => text(v, "empty");
+      const panel = (title, ...kids) =>
+        el("section", { class: "panel" }, el("h2", {}, title), kids);
+      const finite = (v) =>
+        v !== null && v !== undefined && v !== "" && Number.isFinite(Number(v));
+      const num = (v, d = 0) =>
+        finite(v)
+          ? Number(v).toLocaleString(undefined, { maximumFractionDigits: d })
+          : "—";
+      const duration = (m) =>
+        finite(m)
+          ? (Math.round(m) >= 60
+              ? Math.floor(Math.round(m) / 60) +
+                "h " +
+                (Math.round(m) % 60 ? (Math.round(m) % 60) + "m" : "")
+              : Math.round(m) + "m"
+            ).trim()
+          : "—";
+      const dateOf = (d) => new Date(d + "T12:00:00Z");
+      const iso = (d) => d.toISOString().slice(0, 10);
+      const shift = (s, n) => {
+        const d = dateOf(s);
+        d.setUTCDate(d.getUTCDate() + n);
+        return iso(d);
+      };
+      const shortDate = (s) =>
+        s && /^\d{4}-\d{2}-\d{2}/.test(s)
+          ? dateOf(s.slice(0, 10)).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              timeZone: "UTC",
+            })
+          : "—";
+      const valueOr = (v, alt = "—") =>
+        v === null || v === undefined || v === "" ? alt : String(v);
+      function discipline(s) {
+        return el(
+          "span",
+          { class: "discipline" },
+          el("i", {
+            class:
+              "dot " +
+              (["run", "bike", "swim", "strength"].includes(
+                String(s).toLowerCase(),
+              )
+                ? s.toLowerCase()
+                : "other"),
+          }),
+          s || "Other",
+        );
+      }
+      function distance(m, s) {
+        if (!finite(m)) return "—";
+        return String(s).toLowerCase() === "swim"
+          ? num(m / 0.9144) + " yd"
+          : num(m / 1609.344, 1) + " mi";
+      }
+      function list(items, empty) {
+        return items?.length
+          ? el(
+              "ul",
+              {},
+              items.map((v) => el("li", {}, String(v))),
+            )
+          : msg(empty);
+      }
+      function table(head, rows) {
+        return el(
+          "div",
+          { class: "scroll" },
+          el(
+            "table",
+            {},
+            el(
+              "thead",
+              {},
+              el(
+                "tr",
+                {},
+                head.map((x) => el("th", { scope: "col" }, x)),
+              ),
+            ),
+            el(
+              "tbody",
+              {},
+              rows.map((row) =>
+                el(
+                  "tr",
+                  {},
+                  row.map((x) => el("td", {}, x)),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+      function metric(label, value, caption, focus = false) {
+        return el(
+          "div",
+          { class: "metric" + (focus ? " focus" : "") },
+          el("span", {}, label),
+          el("strong", {}, value),
+          el("small", {}, caption),
+        );
+      }
+      function notify(s, error = false) {
+        $("status").textContent = s;
+        $("status").className = "status" + (error ? " error" : "");
+      }
+      function modal(title, ...content) {
+        $("dialog-title").textContent = title;
+        $("dialog-content").replaceChildren(...content.flat().filter(Boolean));
+        if (!$("dialog").open) $("dialog").showModal();
+      }
+      function closeModal() {
+        if ($("dialog").open) $("dialog").close();
+      }
+      $("close").onclick = closeModal;
+      $("dialog").addEventListener("click", (e) => {
+        if (e.target === $("dialog")) {
+          const r = e.target.getBoundingClientRect();
+          if (
+            e.clientX < r.left ||
+            e.clientX > r.right ||
+            e.clientY < r.top ||
+            e.clientY > r.bottom
+          )
+            closeModal();
+        }
+      });
+      function fields() {
+        return el("div", { class: "fields" });
+      }
+      function field(label, input, wide = false) {
+        return el(
+          "label",
+          { class: "field" + (wide ? " wide" : "") },
+          label,
+          input,
+        );
+      }
+      function selection(values, current) {
+        return el(
+          "select",
+          {},
+          values.map((x) => {
+            const [v, label] = Array.isArray(x) ? x : [x, x];
+            return el(
+              "option",
+              { value: v, selected: String(v) === String(current) },
+              label,
+            );
+          }),
+        );
+      }
+      function setBusy(on) {
+        state.busy = on;
+        for (const id of [
+          "sync",
+          "upload",
+          "previous",
+          "next",
+          "today",
+          "week",
+        ])
+          $(id).disabled = on;
+        document
+          .querySelectorAll("[data-write]")
+          .forEach((b) => (b.disabled = on));
+      }
+      async function jsonResponse(r) {
+        const t = await r.text();
+        let j;
+        try {
+          j = JSON.parse(t);
+        } catch {
+          throw Error(
+            "The local tracker returned an unreadable response. Reopen it from your coaching session.",
+          );
+        }
+        if (!r.ok || j.error)
+          throw Error(j.error || "Request failed (" + r.status + ")");
+        return j;
+      }
+      async function load(week, quiet = false) {
+        const id = ++readId;
+        const q = week ? "?week=" + encodeURIComponent(week) : "";
+        if (!quiet) notify("Loading week…");
+        $("view").setAttribute("aria-busy", "true");
+        try {
+          const r = await fetch("/api/tracking" + q, {
+            headers: { "X-Tracker-Token": TOKEN },
+            cache: "no-store",
+          });
+          const snap = await jsonResponse(r);
+          if (id !== readId) return;
+          state.snapshot = snap;
+          $("week").value = snap.week;
+          $("version").textContent = "Active plan v" + snap.version;
+          $("freshness").textContent =
+            snap.freshness || "Garmin sync time unavailable";
+          render();
+          if (!quiet) notify("");
+        } catch (e) {
+          if (id === readId) notify(e.message, true);
+          throw e;
+        } finally {
+          if (id === readId) $("view").setAttribute("aria-busy", "false");
+        }
+      }
+      function gotoWeek(v) {
+        if (!state.busy) load(v).catch(() => {});
+      }
+      async function mutate(action, data = {}, conf = "Saved.") {
+        if (state.busy) return;
+        setBusy(true);
+        notify(action === "sync" ? "Syncing Garmin…" : "Saving…");
+        const target = $("dialog-content");
+        try {
+          const result = await jsonResponse(
+            await fetch("/api/action", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Tracker-Token": TOKEN,
+              },
+              body: JSON.stringify({
+                action,
+                week: state.snapshot?.week,
+                ...data,
+              }),
+            }),
+          );
+          closeModal();
+          await load(state.snapshot?.week, true);
+          notify(result.message || conf);
+        } catch (e) {
+          notify(e.message, true);
+          if ($("dialog").open) {
+            target.querySelector("[role=alert]")?.remove();
+            target.append(
+              el("p", { role: "alert", class: "callout" }, e.message),
+            );
+          }
+        } finally {
+          setBusy(false);
+        }
+      }
+      function writeBtn(label, handler, cls = "primary") {
+        const n = btn(label, handler, cls);
+        n.dataset.write = "1";
+        n.disabled = state.busy;
+        return n;
+      }
+      $("sync").onclick = () => mutate("sync", {}, "Garmin sync finished.");
+      $("upload").onclick = () => $("fit-file").click();
+      $("fit-file").onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setBusy(true);
+        notify("Importing " + file.name + "…");
+        try {
+          await jsonResponse(
+            await fetch("/api/fit", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/octet-stream",
+                "X-Tracker-Token": TOKEN,
+              },
+              body: file,
+            }),
+          );
+          await load(state.snapshot?.week, true);
+          notify("FIT workout imported.");
+        } catch (err) {
+          notify(err.message, true);
+        } finally {
+          e.target.value = "";
+          setBusy(false);
+        }
+      };
+      $("previous").onclick = () => gotoWeek(shift(state.snapshot.week, -7));
+      $("next").onclick = () => gotoWeek(shift(state.snapshot.week, 7));
+      $("today").onclick = () => gotoWeek();
+      $("week").onchange = (e) => {
+        if (e.target.value) gotoWeek(e.target.value);
+      };
+      function navigate(next) {
+        state.tab = next;
+        render();
+      }
+      function nav() {
+        const tabs = pages.map((t) => {
+          const b = btn(t, () => navigate(t));
+          b.setAttribute("aria-current", state.tab === t ? "page" : "false");
+          b.setAttribute("aria-pressed", String(state.tab === t));
+          return b;
+        });
+        $("tabs").replaceChildren(...tabs);
+      }
+      function formBox(children, submit) {
+        return el(
+          "form",
+          {
+            onsubmit: (e) => {
+              e.preventDefault();
+              submit();
+            },
+          },
+          children,
+          el(
+            "div",
+            { class: "actions" },
+            el(
+              "button",
+              { type: "submit", class: "primary", "data-write": "1" },
+              "Save",
+            ),
+          ),
+        );
+      }
+      const getA = (id) =>
+        [
+          ...state.snapshot.activities,
+          ...(state.snapshot.matchCandidates || []),
+        ].find((a) => String(a.id) === String(id));
+      function checkin(a) {
+        const prior = a.checkin || {};
+        const inputs = {};
+        const defs = [
+          ["rpe", "Effort (1–10)", 1, 10],
+          ["soreness", "Soreness (0–10)", 0, 10],
+          ["carbs", "Carbohydrate consumed (g)", 0, 2000],
+          ["fluid", "Fluid consumed (mL)", 0, 20000],
+          ["aeroMinutes", "Time in aero position (min)", 0, 1440],
+        ];
+        const rows = defs.map(([k, label, min, max]) => {
+          inputs[k] = el("input", {
+            type: "number",
+            min,
+            max,
+            step: "any",
+            value: prior[k] ?? "",
+          });
+          return field(label, inputs[k]);
+        });
+        inputs.gi = el("input", { value: prior.gi || "", maxLength: 200 });
+        inputs.conditions = el("input", {
+          value: prior.conditions || "",
+          maxLength: 250,
+        });
+        inputs.equipment = el("input", {
+          value: prior.equipment || "",
+          maxLength: 250,
+        });
+        inputs.notes = el("textarea", {
+          value: prior.notes || "",
+          maxLength: 2000,
+        });
+        rows.push(
+          field("GI comfort", inputs.gi, true),
+          field("Conditions or route", inputs.conditions),
+          field("Equipment", inputs.equipment),
+          field("Notes", inputs.notes, true),
+        );
+        modal(
+          "Workout check-in",
+          text(a.name + " · " + shortDate(a.date), "muted"),
+          formBox(el("div", { class: "fields" }, rows), () => {
+            const data = { activityId: a.id, date: a.date };
+            for (const [k, input] of Object.entries(inputs)) {
+              if (input.value !== "")
+                data[k] =
+                  input.type === "number" ? Number(input.value) : input.value;
+            }
+            if (Object.keys(data).length <= 2) {
+              notify("Enter at least one check-in observation.", true);
+              return;
+            }
+            mutate("checkin", data, "Check-in saved.");
+          }),
+        );
+      }
+      function matching(s) {
+        const snap = state.snapshot;
+        const records = Array.from(
+          new Map(
+            [...(snap.matchCandidates || []), ...snap.activities].map((a) => [
+              String(a.id),
+              a,
+            ]),
+          ).values(),
+        ).filter(
+          (a) =>
+            String(a.sport).toLowerCase() === String(s.sport).toLowerCase() ||
+            (s.activityIds || []).some((id) => String(id) === String(a.id)),
+        );
+        const previousIds = new Set((s.activityIds || []).map(String)),
+          checked = new Map(),
+          portions = new Map();
+        const statuses = [
+          ["done", "Done"],
+          ["partial", "Partial"],
+          ["missed", "Missed"],
+          ["swapped", "Swapped"],
+          ["scheduled", "Scheduled"],
+        ];
+        const picker = selection(
+          statuses,
+          statuses.some(([v]) => v === s.status) ? s.status : "done",
+        );
+        const boxes = records.map((a) => {
+          const id = String(a.id),
+            c = el("input", { type: "checkbox", checked: previousIds.has(id) });
+          const pct = el("input", {
+            type: "number",
+            min: 1,
+            max: 100,
+            step: 1,
+            value: Math.round((s.portions?.[id] ?? 1) * 100),
+            "aria-label": "Share of " + a.name + " assigned to session",
+            style: { width: "4.8em" },
+          });
+          checked.set(id, c);
+          portions.set(id, pct);
+          return el(
+            "div",
+            { class: "row" },
+            el(
+              "label",
+              {},
+              c,
+              shortDate(a.date) +
+                " · " +
+                a.name +
+                " · " +
+                duration(a.durationSeconds / 60),
+            ),
+            el("label", { class: "small" }, pct, " %"),
+          );
+        });
+        modal(
+          "Review workout match",
+          text(s.title + " · " + shortDate(s.date), "muted"),
+          formBox(
+            el(
+              "div",
+              {},
+              field("Workout outcome", picker),
+              el(
+                "div",
+                { class: "group" },
+                el("h3", {}, "Recorded activities"),
+                text(
+                  "Select recordings to pair with this session. For a split recording, enter the percentage of its duration to assign.",
+                  "small muted",
+                ),
+                el(
+                  "div",
+                  { class: "checks" },
+                  boxes.length
+                    ? boxes
+                    : msg("No compatible recordings in the matching window."),
+                ),
+              ),
+            ),
+            () => {
+              const ids = [...checked]
+                .filter(([, c]) => c.checked)
+                .map(([id]) => id);
+              const shares = Object.fromEntries(
+                ids.map((id) => [id, Number(portions.get(id).value) / 100]),
+              );
+              mutate(
+                "match",
+                {
+                  sessionId: s.id,
+                  activityIds: ids,
+                  status: picker.value,
+                  portions: shares,
+                },
+                "Workout match saved.",
+              );
+            },
+          ),
+        );
+      }
+      function openSession(s) {
+        const records = (s.activityIds || []).map(getA).filter(Boolean);
+        const details = [
+          text(
+            shortDate(s.date) +
+              " · " +
+              valueOr(s.slot, "") +
+              " · " +
+              valueOr(s.sport) +
+              " · " +
+              duration(s.minutes),
+            "muted",
+          ),
+          el(
+            "section",
+            {},
+            el("h3", {}, "Prescription"),
+            text(
+              s.details ||
+                s.description ||
+                "No detailed prescription available.",
+            ),
+          ),
+          el(
+            "section",
+            {},
+            el("h3", {}, "Execution"),
+            text(
+              typeof s.execution === "string"
+                ? s.execution
+                : records.length
+                  ? duration(s.actualMinutes) +
+                    " recorded · " +
+                    duration(s.minutes) +
+                    " prescribed"
+                  : "No linked execution evidence.",
+            ),
+            records.length
+              ? records.map((a) => activityRow(a))
+              : msg("No linked recording."),
+          ),
+          planIntervals(s),
+          el(
+            "div",
+            { class: "actions" },
+            writeBtn("Review match", () => matching(s), "control"),
+          ),
+        ];
+        modal(s.title, details);
+      }
+      function activityRow(a) {
+        return el(
+          "button",
+          { type: "button", class: "entry", onclick: () => openActivity(a) },
+          discipline(a.sport),
+          el(
+            "span",
+            { class: "summary" },
+            el("strong", {}, a.name || a.sport),
+            el("small", {}, shortDate(a.date)),
+          ),
+          el(
+            "b",
+            {},
+            duration(finite(a.durationSeconds) ? a.durationSeconds / 60 : null),
+          ),
+        );
+      }
+      function sessionRow(s) {
+        return el(
+          "button",
+          { type: "button", class: "entry", onclick: () => openSession(s) },
+          el("time", { dateTime: s.date }, shortDate(s.date)),
+          el(
+            "span",
+            { class: "summary" },
+            el("strong", {}, s.title),
+            el(
+              "small",
+              {},
+              valueOr(s.sport) +
+                " · " +
+                duration(s.minutes) +
+                (s.optional ? " · Optional" : ""),
+            ),
+          ),
+          el(
+            "span",
+            { class: "pill " + String(s.status || "").toLowerCase() },
+            s.status || "Planned",
+          ),
+        );
+      }
+      function matchedSessions(a) {
+        return state.snapshot.sessions.filter((s) =>
+          (s.activityIds || []).map(String).includes(String(a.id)),
+        );
+      }
+      function matchFromRecording(a) {
+        const sessions = Array.from(
+          new Map(
+            [
+              ...(state.snapshot.adjacentSessions || []),
+              ...state.snapshot.sessions,
+            ].map((x) => [x.id, x]),
+          ).values(),
+        )
+          .filter((s) => s.sport === a.sport)
+          .sort(
+            (x, y) =>
+              Math.abs(dateOf(x.date) - dateOf(a.date)) -
+              Math.abs(dateOf(y.date) - dateOf(a.date)),
+          );
+        if (!sessions.length) {
+          modal(
+            "Match recording",
+            msg("No compatible planned sessions in the matching window."),
+          );
+          return;
+        }
+        const picker = selection(
+          sessions.map((s) => [s.id, shortDate(s.date) + " · " + s.title]),
+          sessions[0].id,
+        );
+        modal(
+          "Match recording",
+          text(a.name + " · " + shortDate(a.date), "muted"),
+          field("Planned session", picker),
+          el(
+            "div",
+            { class: "actions" },
+            btn(
+              "Select recording share",
+              async () => {
+                const s = sessions.find((s) => s.id === picker.value);
+                if (!state.snapshot.sessions.some((x) => x.id === s.id)) {
+                  try {
+                    await load(s.date, true);
+                  } catch {
+                    return;
+                  }
+                }
+                const saved = state.snapshot.sessions.find(
+                  (x) => x.id === s.id,
+                );
+                if (!saved) {
+                  notify("The planned session could not be found.", true);
+                  return;
+                }
+                const withRecording = [
+                  ...new Set([...(saved.activityIds || []), a.id]),
+                ];
+                matching({
+                  ...saved,
+                  activityIds: withRecording,
+                  status: saved.date === a.date ? "done" : "swapped",
+                });
+              },
+              "primary",
+            ),
+          ),
+        );
+      }
+      function recordReview(a) {
+        const matched = matchedSessions(a);
+        if (matched.length)
+          return el(
+            "section",
+            {},
+            el("h3", {}, "Matched sessions"),
+            matched.map(sessionRow),
+          );
+        return el(
+          "section",
+          {},
+          el("h3", {}, a.unplanned ? "Marked unplanned" : "Recording match"),
+          el(
+            "div",
+            { class: "actions" },
+            btn("Match to a session", () => matchFromRecording(a)),
+            writeBtn(
+              a.unplanned ? "Return to matching inbox" : "Mark unplanned",
+              () =>
+                mutate(
+                  "unplanned",
+                  { activityId: a.id, unplanned: !a.unplanned },
+                  "Recording classification saved.",
+                ),
+              "control",
+            ),
+          ),
+        );
+      }
+      function checkinDetails(a) {
+        const x = a.checkin;
+        if (!x) return null;
+        const rows = [
+          ["Effort", x.rpe, "/10"],
+          ["Soreness", x.soreness, "/10"],
+          ["Carbohydrates", x.carbs, "g"],
+          ["Fluid", x.fluid, "mL"],
+          ["Time in aero", x.aeroMinutes, "min"],
+          ["GI comfort", x.gi, ""],
+          ["Conditions", x.conditions, ""],
+          ["Equipment", x.equipment, ""],
+          ["Notes", x.notes, ""],
+        ]
+          .filter(([, v]) => v !== undefined && v !== null && v !== "")
+          .map(([k, v, u]) => [k, v + (u ? " " + u : "")]);
+        return rows.length
+          ? el(
+              "section",
+              {},
+              el("h3", {}, "Workout check-in"),
+              table(["Observation", "Reported"], rows),
+            )
+          : null;
+      }
+      function weekChart(s) {
+        const sports = s.totals.filter((x) =>
+          ["Swim", "Bike", "Run"].includes(x.sport),
+        );
+        const results = sports.map((r) => {
+          const ratio = Math.min(
+            100,
+            Math.max(
+              0,
+              (r.actualMinutes /
+                Math.max(r.actualMinutes, r.plannedMinutes, 1)) *
+                100,
+            ),
+          );
+          const target = Math.min(
+            100,
+            Math.max(
+              0,
+              (r.plannedMinutes /
+                Math.max(r.actualMinutes, r.plannedMinutes, 1)) *
+                100,
+            ),
+          );
+          return el(
+            "div",
+            { class: "volume-cell" },
+            discipline(r.sport),
+            el(
+              "span",
+              { class: "volume-time" },
+              duration(r.actualMinutes) + " / " + duration(r.plannedMinutes),
+            ),
+            el(
+              "div",
+              { class: "volume-track", "aria-hidden": "true" },
+              el("span", {
+                class: "target-fill",
+                style: { width: target + "%" },
+              }),
+              el("span", {
+                class: "observed-fill " + r.sport.toLowerCase(),
+                style: { width: ratio + "%" },
+              }),
+            ),
+          );
+        });
+        return el(
+          "div",
+          { class: "week-volume" },
+          el(
+            "div",
+            { class: "volume-heading" },
+            el("span", {}, "Recorded / required time"),
+          ),
+          results,
+        );
+      }
+
+      function openActivity(a) {
+        const more = activityMetrics(a);
+        modal(
+          a.name || "Recorded activity",
+          text(shortDate(a.date) + " · " + valueOr(a.sport), "muted"),
+          table(
+            ["Measure", "Recorded"],
+            [
+              [
+                "Duration",
+                duration(
+                  finite(a.durationSeconds) ? a.durationSeconds / 60 : null,
+                ),
+              ],
+              ["Distance", distance(a.distanceMeters, a.sport)],
+              [
+                "Average heart rate",
+                finite(a.averageHr) ? num(a.averageHr) + " bpm" : "—",
+              ],
+              [
+                "Average power",
+                finite(a.averagePower) ? num(a.averagePower) + " W" : "—",
+              ],
+              ...more,
+            ],
+          ),
+          intervalView(a),
+          recordReview(a),
+          checkinDetails(a),
+          el(
+            "div",
+            { class: "actions" },
+            writeBtn("Workout check-in", () => checkin(a)),
+          ),
+        );
+      }
+      function totalTable(snap) {
+        return table(
+          [
+            "Sport",
+            "Required time",
+            "Optional time",
+            "Recorded time",
+            "Planned volume",
+            "Recorded volume",
+            "Planned stress",
+            "Recorded stress",
+          ],
+          snap.totals.map((t) => [
+            discipline(t.sport),
+            duration(t.plannedMinutes),
+            duration(t.optionalMinutes),
+            duration(t.actualMinutes),
+            distance(t.plannedDistanceMeters, t.sport),
+            distance(t.actualDistanceMeters, t.sport),
+            num(t.plannedStress),
+            num(t.actualStress),
+          ]),
+        );
+      }
+      function keySessions(snap) {
+        const key = snap.sessions.filter((s) => s.key);
+        return panel(
+          "Key sessions",
+          key.length
+            ? key.map(sessionRow)
+            : msg("No key sessions scheduled this week."),
+        );
+      }
+      function overview(s) {
+        const endurance = s.totals.filter((t) =>
+          ["swim", "bike", "run"].includes(t.sport.toLowerCase()),
+        );
+        const sum = (k) =>
+          endurance.reduce((n, t) => n + (Number(t[k]) || 0), 0);
+        const key = s.sessions.filter((x) => x.key);
+        const actualCount = s.activities.filter(
+          (a) => a.date >= s.week && a.date < shift(s.week, 7),
+        ).length;
+        return [
+          el(
+            "div",
+            { class: "stats" },
+            metric(
+              "Endurance recorded",
+              duration(sum("actualMinutes")),
+              duration(sum("plannedMinutes")) + " planned",
+              true,
+            ),
+            metric("Recorded workouts", actualCount, "Selected week"),
+            metric(
+              "Key sessions completed",
+              key.filter((x) =>
+                ["done", "swapped"].includes(String(x.status).toLowerCase()),
+              ).length +
+                " / " +
+                key.length,
+              "Selected week",
+            ),
+            metric(
+              "Recorded stress",
+              endurance.filter((t) => t.actualMinutes > 0).length > 0 &&
+                endurance
+                  .filter((t) => t.actualMinutes > 0)
+                  .every((t) => finite(t.actualStress))
+                ? num(sum("actualStress"))
+                : "—",
+              "Weekly endurance estimate",
+            ),
+          ),
+          panel("Week of " + shortDate(s.week), weekChart(s), totalTable(s)),
+          el(
+            "div",
+            { class: "grid" },
+            keySessions(s),
+            panel(
+              "Next actions",
+              list(s.review?.next, "No adjustment suggested for this week."),
+              btn(
+                "Open weekly review",
+                () => navigate("Weekly review"),
+                "quiet",
+              ),
+            ),
+          ),
+          s.alerts?.length ? panel("Training flags", list(s.alerts, "")) : null,
+        ];
+      }
+      function weekEntries(s) {
+        const sports = [
+          "All",
+          ...new Set(
+            [...s.sessions, ...s.activities]
+              .map((x) => x.sport)
+              .filter(Boolean),
+          ),
+        ];
+        const chooser = selection(sports, state.sport);
+        chooser.onchange = () => {
+          state.sport = chooser.value;
+          render();
+        };
+        const sessions = s.sessions.filter(
+          (x) => state.sport === "All" || x.sport === state.sport,
+        );
+        const activities = s.activities.filter(
+          (x) =>
+            (state.sport === "All" || x.sport === state.sport) &&
+            x.date >= s.week &&
+            x.date < shift(s.week, 7),
+        );
+        const inbox = activities.filter(
+          (a) =>
+            !a.unplanned &&
+            !matchedSessions(a).length &&
+            !a.matchedSessionIds?.length,
+        );
+        return [
+          inbox.length
+            ? panel(
+                "Matching inbox",
+                text(
+                  "Review a recording to match it, split its time, or mark it unplanned.",
+                  "foot",
+                ),
+                inbox.map(activityRow),
+              )
+            : null,
+          panel(
+            "Workouts",
+            field("Discipline", chooser),
+            el(
+              "div",
+              { class: "group" },
+              el("h3", {}, "Planned"),
+              sessions.length
+                ? sessions.map(sessionRow)
+                : msg("No planned sessions in this selection."),
+            ),
+            el(
+              "div",
+              { class: "group" },
+              el("h3", {}, "Recorded"),
+              activities.length
+                ? activities.map(activityRow)
+                : msg("No recordings in this selection."),
+            ),
+          ),
+        ];
+      }
+      function activityMetrics(a) {
+        const score = state.snapshot.metrics?.scores?.[a.id];
+        if (!score) return [];
+        return [
+          ["Estimated stress", num(score.stress, 1)],
+          ["Method", valueOr(score.method)],
+          ["Confidence", valueOr(score.confidence)],
+        ];
+      }
+      function planIntervals(s) {
+        const detail = state.snapshot.metrics?.intervals?.[s.id];
+        if (!detail) return null;
+        const planned = detail.plannedSteps || [],
+          laps = detail.actualLaps || [];
+        return el(
+          "section",
+          {},
+          el("h3", {}, "Interval execution"),
+          detail.alignment ? text(detail.alignment, "foot") : null,
+          planned.length
+            ? table(
+                ["Prescribed step", "Time / distance", "Effort"],
+                planned.map((x) => [
+                  valueOr(x.label),
+                  finite(x.time) ? num(x.time, 2) + " min" : "—",
+                  valueOr(x.kind),
+                ]),
+              )
+            : null,
+          laps.length
+            ? table(
+                ["Recorded lap", "Time", "Distance", "Power", "HR"],
+                laps.map((l, i) => [
+                  i + 1,
+                  duration(
+                    finite(l.durationSeconds) ? l.durationSeconds / 60 : null,
+                  ),
+                  distance(l.distanceMeters, s.sport),
+                  finite(l.averagePower) ? num(l.averagePower) + " W" : "—",
+                  finite(l.averageHr) ? num(l.averageHr) + " bpm" : "—",
+                ]),
+              )
+            : msg("Recorded laps unavailable for this workout."),
+        );
+      }
+      function intervalView(a) {
+        const matched = state.snapshot.sessions.find((s) =>
+          (s.activityIds || []).some((id) => String(id) === String(a.id)),
+        );
+        return matched
+          ? planIntervals(matched)
+          : msg(
+              "Match this recording to a planned session to compare intervals.",
+            );
+      }
+      const inks = {
+        ctl: "#36583d",
+        atl: "#ac5939",
+        tsb: "#7c6594",
+        planned: "#647984",
+        forecast: "#397790",
+        high: "#8c866a",
+        health: "#326e60",
+      };
+      function chart(points, lines, description) {
+        const figure = el("figure", { style: { margin: "12px 0 4px" } });
+        const visible = lines.filter((l) =>
+          points.some((p) => finite(l.get(p))),
+        );
+        if (!visible.length)
+          return msg("No observations available for this selection.");
+        const canvas = el("canvas", {
+          class: "chart",
+          role: "img",
+          "aria-label": description,
+        });
+        const legend = el(
+          "div",
+          { class: "legend" },
+          visible.map((l) =>
+            el(
+              "span",
+              {},
+              el("i", {
+                style: {
+                  color: l.color,
+                  borderTopStyle: l.dash ? "dashed" : "solid",
+                },
+              }),
+              l.label,
+            ),
+          ),
+        );
+        const cursor = el("input", {
+          type: "range",
+          min: 0,
+          max: Math.max(0, points.length - 1),
+          value: points.length - 1,
+          step: 1,
+          "aria-label": "Inspect chart date",
+          style: { width: "100%", accentColor: "var(--pine)" },
+        });
+        const readout = el("div", { class: "small muted", "aria-live": "off" });
+        let selected = points.length - 1;
+        function draw() {
+          if (!canvas.isConnected) return;
+          const w = canvas.clientWidth,
+            h = canvas.clientHeight;
+          if (!w || !h) return;
+          const ratio = Math.min(window.devicePixelRatio || 1, 3);
+          canvas.width = Math.round(w * ratio);
+          canvas.height = Math.round(h * ratio);
+          const c = canvas.getContext("2d");
+          c.scale(ratio, ratio);
+          const values = points.flatMap((p) =>
+            visible
+              .map((l) => l.get(p))
+              .filter(finite)
+              .map(Number),
+          );
+          const min = Math.min(0, ...values),
+            max = Math.max(min + 1, ...values);
+          const left = 44,
+            right = w - 12,
+            top = 10,
+            bottom = h - 32;
+          const t = points.map((p) => dateOf(p.date).getTime());
+          const start = t[0],
+            end = t[t.length - 1];
+          const x = (i) =>
+            left +
+            (right - left) *
+              (end === start ? 0.5 : (t[i] - start) / (end - start));
+          const y = (v) => bottom - ((bottom - top) * (v - min)) / (max - min);
+          c.font = "12px system-ui";
+          c.fillStyle = "#526151";
+          c.textAlign = "right";
+          for (let n = 0; n <= 4; n++) {
+            const val = min + ((max - min) * n) / 4,
+              at = y(val);
+            c.fillText(num(val), left - 5, at + 4);
+            c.strokeStyle = "#e1e5df";
+            c.beginPath();
+            c.moveTo(left, at);
+            c.lineTo(right, at);
+            c.stroke();
+          }
+          c.textAlign = "left";
+          c.fillText(shortDate(points[0].date), left, bottom + 20);
+          c.textAlign = "right";
+          c.fillText(
+            shortDate(points[points.length - 1].date),
+            right,
+            bottom + 20,
+          );
+          for (const l of visible) {
+            c.beginPath();
+            c.strokeStyle = l.color;
+            c.lineWidth = l.dash ? 1.7 : 2.4;
+            c.setLineDash(l.dash ? [6, 4] : []);
+            let pen = false;
+            points.forEach((p, i) => {
+              const v = l.get(p);
+              if (!finite(v)) {
+                pen = false;
+                return;
+              }
+              if (pen) c.lineTo(x(i), y(v));
+              else c.moveTo(x(i), y(v));
+              pen = true;
+            });
+            c.stroke();
+            c.setLineDash([]);
+            if (points.length === 1 && finite(l.get(points[0]))) {
+              c.fillStyle = l.color;
+              c.beginPath();
+              c.arc(x(0), y(l.get(points[0])), 3, 0, Math.PI * 2);
+              c.fill();
+            }
+          }
+          c.strokeStyle = "#7f8b7e";
+          c.lineWidth = 1;
+          c.beginPath();
+          c.moveTo(x(selected), top);
+          c.lineTo(x(selected), bottom);
+          c.stroke();
+          const p = points[selected];
+          readout.textContent = [
+            shortDate(p.date),
+            ...visible.map((l) => l.label + " " + num(l.get(p), 1)),
+          ].join(" · ");
+        }
+        cursor.oninput = () => {
+          selected = Number(cursor.value);
+          draw();
+        };
+        canvas.onclick = (e) => {
+          const rect = canvas.getBoundingClientRect();
+          const frac = Math.max(
+            0,
+            Math.min(1, (e.clientX - rect.left - 44) / (rect.width - 56)),
+          );
+          const start = dateOf(points[0].date).getTime(),
+            end = dateOf(points[points.length - 1].date).getTime();
+          const goal = start + (end - start) * frac;
+          selected = points.reduce(
+            (best, p, i) =>
+              Math.abs(dateOf(p.date) - goal) <
+              Math.abs(dateOf(points[best].date) - goal)
+                ? i
+                : best,
+            0,
+          );
+          cursor.value = selected;
+          draw();
+        };
+        figure.append(legend, canvas, cursor, readout);
+        requestAnimationFrame(draw);
+        if (window.ResizeObserver) {
+          const observer = new ResizeObserver(() => {
+            if (canvas.isConnected) draw();
+            else observer.disconnect();
+          });
+          observer.observe(canvas);
+        }
+        return figure;
+      }
+      function loadView(s) {
+        const pmc = s.metrics?.pmc || {};
+        const bySport = selection(
+          ["All", "Swim", "Bike", "Run"],
+          state.pmcSport,
+        );
+        bySport.onchange = () => {
+          state.pmcSport = bySport.value;
+          render();
+        };
+        const span = selection(
+          [
+            [42, "6 weeks"],
+            [84, "12 weeks"],
+            [168, "24 weeks"],
+            [0, "Full history"],
+          ],
+          state.range,
+        );
+        span.onchange = () => {
+          state.range = Number(span.value);
+          render();
+        };
+        const all = pmc[state.pmcSport] || [];
+        const end = shift(s.week, 6);
+        const from = state.range ? shift(s.week, -state.range + 7) : null;
+        const past = all.filter(
+          (p) => (!from || p.date >= from) && p.date <= end,
+        );
+        const future = all.filter((p) => p.date > end && p.date >= s.today);
+        const combined = [...past, ...future];
+        const lines = [
+          ["Fitness (CTL)", "ctl", "actual", "ctl"],
+          ["Fatigue (ATL)", "atl", "actual", "atl"],
+          ["Form (TSB)", "tsb", "actual", "tsb"],
+          ["Plan CTL", "planned", "planned", "ctl", true],
+          ["Forecast CTL", "forecast", "forecast", "ctl", true],
+          ["Optional forecast CTL", "high", "forecastHigh", "ctl", true],
+        ].map(([label, color, k, sub, dash]) => ({
+          label,
+          color: inks[color],
+          get: (p) => p[k]?.[sub],
+          dash,
+        }));
+        return [
+          panel(
+            "Performance management",
+            el(
+              "div",
+              { class: "chart-tools" },
+              field("Discipline", bySport),
+              field("Lookback", span),
+            ),
+            chart(
+              combined,
+              lines,
+              "Actual fitness, fatigue and form with planned and forecast fitness",
+            ),
+            text(
+              past.some((p) =>
+                String(p.actual?.quality || "").includes("partial"),
+              )
+                ? "Partial coverage: actual load is a lower bound. A zero may represent unscored or missing data."
+                : "Actual load uses scored recordings.",
+              "foot",
+            ),
+            el(
+              "details",
+              {},
+              el("summary", {}, "Daily load values"),
+              el(
+                "div",
+                { class: "scroll-table" },
+                table(
+                  [
+                    "Date",
+                    "Actual stress",
+                    "CTL",
+                    "ATL",
+                    "TSB",
+                    "Planned CTL",
+                    "Forecast CTL",
+                    "Quality",
+                  ],
+                  combined
+                    .slice()
+                    .reverse()
+                    .map((p) => [
+                      shortDate(p.date),
+                      num(p.actual?.stress, 1),
+                      num(p.actual?.ctl, 1),
+                      num(p.actual?.atl, 1),
+                      num(p.actual?.tsb, 1),
+                      num(p.planned?.ctl, 1),
+                      num(p.forecast?.ctl, 1),
+                      valueOr(p.actual?.quality),
+                    ]),
+                ),
+              ),
+            ),
+          ),
+        ];
+      }
+      function thresholdForm() {
+        const dt = el("input", {
+          type: "date",
+          required: true,
+          value: state.snapshot.today,
+        });
+        const kind = selection(
+          [
+            ["ftp", "Bike FTP (W)"],
+            ["runPace", "Threshold run pace (seconds/km)"],
+            ["css", "Critical swim pace (seconds/100 m)"],
+            ["bikeHr", "Bike threshold HR (bpm)"],
+            ["runHr", "Run threshold HR (bpm)"],
+          ],
+          "ftp",
+        );
+        const amount = el("input", {
+          type: "number",
+          required: true,
+          min: 0.1,
+          max: 3000,
+          step: "any",
+        });
+        const options = {
+          ftp: ["Bike", "ftp", "W"],
+          runPace: ["Run", "runPace", "s/km"],
+          css: ["Swim", "css", "s/100m"],
+          bikeHr: ["Bike", "lthr", "bpm"],
+          runHr: ["Run", "lthr", "bpm"],
+        };
+        modal(
+          "Log a threshold test",
+          formBox(
+            el(
+              "div",
+              { class: "fields" },
+              field("Test date", dt),
+              field("Test", kind),
+              field("Measured value", amount),
+            ),
+            () => {
+              const [sport, k, unit] = options[kind.value];
+              mutate(
+                "threshold",
+                {
+                  date: dt.value,
+                  sport,
+                  kind: k,
+                  value: Number(amount.value),
+                  unit,
+                },
+                "Threshold recorded.",
+              );
+            },
+          ),
+        );
+      }
+      function evidenceTable(items) {
+        return table(
+          [
+            "Date",
+            "Discipline",
+            "Measure",
+            "Observation",
+            "Conditions / method",
+          ],
+          items.map((p) => [
+            shortDate(p.date),
+            discipline(p.sport),
+            valueOr(p.metric || p.kind),
+            [num(p.value, 2), valueOr(p.unit || p.units, "")].join(" "),
+            [p.context, p.confidence]
+              .filter((x) => typeof x === "string")
+              .join(" · ") || "—",
+          ]),
+        );
+      }
+      function performance(s) {
+        const m = s.metrics || {};
+        const byDate = (items) =>
+          (Array.isArray(items) ? items : [])
+            .filter((x) => !x.date || x.date <= shift(s.week, 6))
+            .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+        const marks = byDate(m.benchmarks),
+          records = byDate(m.records),
+          thresholds = byDate(m.thresholds);
+        const kinds = [
+          ...new Set(
+            marks.map(
+              (p) => p.series || [p.sport, p.metric, p.unit].join(" · "),
+            ),
+          ),
+        ];
+        let selected = kinds.includes(state.benchmark)
+          ? state.benchmark
+          : kinds[0];
+        const series = marks
+          .filter(
+            (p) =>
+              (p.series || [p.sport, p.metric, p.unit].join(" · ")) ===
+              selected,
+          )
+          .reverse();
+        const group = selection(kinds, selected);
+        group.onchange = () => {
+          state.benchmark = group.value;
+          render();
+        };
+        const line = {
+          label: series[0]?.unit || "Observed",
+          color: inks.health,
+          get: (p) => p.value,
+        };
+        return [
+          historyComparison(s),
+          panel(
+            "Performance benchmarks",
+            marks.length
+              ? el(
+                  "div",
+                  {},
+                  field("Benchmark series", group),
+                  chart(
+                    series,
+                    [line],
+                    "Trend for selected performance benchmark",
+                  ),
+                  el(
+                    "details",
+                    {},
+                    el("summary", {}, "Benchmark observations"),
+                    el("div", { class: "scroll-table" }, evidenceTable(marks)),
+                  ),
+                )
+              : msg(
+                  "Comparable benchmarks will appear as eligible recordings are imported.",
+                ),
+          ),
+          panel(
+            "Personal records",
+            records.length
+              ? el("div", { class: "scroll-table" }, evidenceTable(records))
+              : msg("No eligible personal records in the available history."),
+          ),
+          panel(
+            "Threshold history",
+            writeBtn("Log a test", thresholdForm),
+            thresholds.length
+              ? evidenceTable(thresholds)
+              : msg("Add a dated test to use it in future scoring."),
+          ),
+        ];
+      }
+      const healthFields = {
+        hrvMs: ["Overnight HRV", "ms"],
+        restingHr: ["Resting heart rate", "bpm"],
+        sleepHours: ["Sleep duration", "h"],
+        bodyBatteryLatest: ["Body Battery (latest)", "/100"],
+        bodyBatteryLow: ["Body Battery (daily low)", "/100"],
+        bodyBatteryHigh: ["Body Battery (daily high)", "/100"],
+      };
+      function recovery(s) {
+        const rows = (s.recovery || [])
+          .filter((p) => p.date <= shift(s.week, 6))
+          .sort((a, b) => a.date.localeCompare(b.date));
+        const sources = [
+          ...new Set(rows.map((r) => r.source || "Unspecified")),
+        ].sort();
+        const chosen = sources.includes(state.healthSource)
+          ? state.healthSource
+          : sources.includes("garmin")
+            ? "garmin"
+            : sources[0];
+        const readings = rows.filter(
+          (r) => (r.source || "Unspecified") === chosen,
+        );
+        const source = selection(sources, chosen);
+        source.onchange = () => {
+          state.healthSource = source.value;
+          render();
+        };
+        const sel = selection(
+          Object.entries(healthFields).map(([k, v]) => [k, v[0]]),
+          state.health,
+        );
+        sel.onchange = () => {
+          state.health = sel.value;
+          render();
+        };
+        const values = readings.filter((p) => finite(p[state.health]));
+        const end = [shift(s.week, 6), s.today].sort()[0],
+          begin = shift(end, -55);
+        const data = [];
+        const indexed = new Map(readings.map((x) => [x.date, x]));
+        for (let i = 0; i < 56; i++) {
+          const d = shift(begin, i);
+          data.push(indexed.get(d) || { date: d });
+        }
+        const [label, unit] = healthFields[state.health];
+        const baseline = (vals) => {
+          if (!vals.length) return null;
+          const sorted = vals.slice().sort((a, b) => a - b);
+          const mid = Math.floor(sorted.length / 2);
+          return sorted.length % 2
+            ? sorted[mid]
+            : (sorted[mid - 1] + sorted[mid]) / 2;
+        };
+        const recent = values.filter((r) => r.date >= shift(end, -6)),
+          usual = values.filter(
+            (r) => r.date >= shift(end, -34) && r.date < shift(end, -6),
+          );
+        return [
+          panel(
+            "Recovery history",
+            el(
+              "div",
+              { class: "chart-tools" },
+              field("Measure", sel),
+              sources.length ? field("Source", source) : null,
+            ),
+            chart(
+              data,
+              [
+                {
+                  label: label + " (" + unit + ")",
+                  get: (p) => p[state.health],
+                  color: inks.health,
+                },
+              ],
+              "Daily " + label,
+            ),
+            text(
+              values.length
+                ? "Last recorded " +
+                    shortDate(values.at(-1).date) +
+                    " · " +
+                    num(values.at(-1)[state.health], 1) +
+                    " " +
+                    unit
+                : "No recorded values for this measure.",
+              "foot",
+            ),
+            el(
+              "div",
+              { class: "cards" },
+              metric(
+                "Recent median",
+                recent.length >= 3
+                  ? num(baseline(recent.map((r) => r[state.health])), 1) +
+                      " " +
+                      unit
+                  : "—",
+                recent.length + " of the last 7 days",
+              ),
+              metric(
+                "Prior baseline median",
+                usual.length >= 14
+                  ? num(baseline(usual.map((r) => r[state.health])), 1) +
+                      " " +
+                      unit
+                  : "—",
+                usual.length + " of the preceding 28 days",
+              ),
+            ),
+          ),
+          panel(
+            "Daily readings",
+            readings.length
+              ? el(
+                  "div",
+                  { class: "scroll-table" },
+                  table(
+                    [
+                      "Date",
+                      "Source",
+                      "Sleep",
+                      "HRV",
+                      "Resting HR",
+                      "Body Battery latest / low / high",
+                    ],
+                    readings
+                      .slice()
+                      .reverse()
+                      .map((p) => [
+                        shortDate(p.date),
+                        valueOr(p.source),
+                        finite(p.sleepHours)
+                          ? duration(p.sleepHours * 60)
+                          : "—",
+                        finite(p.hrvMs) ? num(p.hrvMs, 1) + " ms" : "—",
+                        finite(p.restingHr) ? num(p.restingHr) + " bpm" : "—",
+                        [
+                          p.bodyBatteryLatest,
+                          p.bodyBatteryLow,
+                          p.bodyBatteryHigh,
+                        ]
+                          .map((n) => num(n))
+                          .join(" / "),
+                      ]),
+                  ),
+                )
+              : msg("No wellness records through the selected week."),
+          ),
+          panel(
+            "Recovery and load flags",
+            list(s.alerts, "No active flags in the available data."),
+          ),
+        ];
+      }
+      function race(s) {
+        const items = s.readiness || [];
+        return [
+          raceProjection(s),
+          panel(
+            "Race readiness",
+            items.length
+              ? el(
+                  "div",
+                  { class: "cards" },
+                  items.map((r) =>
+                    el(
+                      "article",
+                      { class: "card" },
+                      el("h3", {}, r.label),
+                      el("b", {}, valueOr(r.value)),
+                      text(r.detail || "", "small muted"),
+                      r.date ? text(shortDate(r.date), "foot") : null,
+                      r.activityId || r.sessionId
+                        ? btn("View evidence", () => openEvidence(r), "quiet")
+                        : null,
+                    ),
+                  ),
+                )
+              : msg(
+                  "Readiness evidence will appear as relevant sessions are recorded.",
+                ),
+          ),
+          keySessions(s),
+        ];
+      }
+      function proposalBox(p, s) {
+        const before = typeof p.from === "string" ? p.from : "",
+          after = typeof p.to === "string" ? p.to : "";
+        function preview() {
+          modal(
+            "Review plan adjustment",
+            el("section", {}, el("h3", {}, p.title), text(p.detail || "")),
+            before || after
+              ? table(["Current", "Proposed"], [[before || "—", after || "—"]])
+              : null,
+            el(
+              "div",
+              { class: "actions" },
+              btn("Cancel", closeModal),
+              writeBtn("Approve plan revision", () =>
+                mutate(
+                  "approve",
+                  { id: p.id, version: s.version },
+                  "Plan revision approved.",
+                ),
+              ),
+            ),
+          );
+        }
+        return el(
+          "article",
+          { class: "review-item" },
+          el("h3", {}, p.title),
+          text(p.detail || "", "muted"),
+          btn("Review adjustment", preview),
+        );
+      }
+      function review(s) {
+        const r = s.review || {};
+        const notes = el("textarea", {
+          required: true,
+          maxLength: 2000,
+          placeholder:
+            "Record an assumption, the evidence, and what to carry into the next plan.",
+        });
+        return [
+          panel(
+            "Weekly review",
+            el(
+              "div",
+              { class: "cards" },
+              [
+                ["What went well", r.wins, "No verified wins yet."],
+                [
+                  "What slipped",
+                  r.slips,
+                  "No slips identified in the available records.",
+                ],
+                ["Next week", r.next, "No adjustment suggested."],
+              ].map(([name, items, empty]) =>
+                el(
+                  "article",
+                  { class: "card" },
+                  el("h3", {}, name),
+                  list(items, empty),
+                ),
+              ),
+            ),
+          ),
+          panel(
+            "Proposed adjustments",
+            s.proposals?.length
+              ? s.proposals.map((p) => proposalBox(p, s))
+              : msg("No plan revisions proposed for this week."),
+          ),
+          panel(
+            "Lessons for the next plan",
+            (s.lessons || []).map((l) =>
+              el(
+                "div",
+                { class: "review-item" },
+                el("small", {}, shortDate(l.date)),
+                text(l.text),
+              ),
+            ),
+            formBox(field("Save a planning lesson", notes, true), () => {
+              const val = notes.value.trim();
+              if (val)
+                mutate("lesson", { text: val }, "Planning lesson saved.");
+            }),
+          ),
+        ];
+      }
+      function sessionDateFor(id) {
+        return [
+          ...state.snapshot.sessions,
+          ...(state.snapshot.adjacentSessions || []),
+        ].find((x) => x.id === id)?.date;
+      }
+      async function openEvidence(item) {
+        let a = item.activityId ? getA(item.activityId) : null;
+        let s = item.sessionId
+          ? state.snapshot.sessions.find((x) => x.id === item.sessionId)
+          : null;
+        if (a) {
+          openActivity(a);
+          return;
+        }
+        if (s) {
+          openSession(s);
+          return;
+        }
+        const d = item.date || sessionDateFor(item.sessionId);
+        if (!d) {
+          notify("No linked observation is available in this week.", true);
+          return;
+        }
+        try {
+          await load(d);
+          state.tab = "Workouts";
+          render();
+          a = item.activityId ? getA(item.activityId) : null;
+          s = item.sessionId
+            ? state.snapshot.sessions.find((x) => x.id === item.sessionId)
+            : null;
+          if (a) openActivity(a);
+          else if (s) openSession(s);
+          else notify("Opened the evidence week.");
+        } catch {
+          /* load displays the request error */
+        }
+      }
+      function historyComparison(s) {
+        const data = s.metrics?.historyComparison || {};
+        const period = selection(
+          [
+            ["aligned", "Matched point in the build"],
+            ["finalEight", "Final eight before race week"],
+          ],
+          state.comparisonPeriod || "aligned",
+        );
+        period.onchange = () => {
+          state.comparisonPeriod = period.value;
+          render();
+        };
+        const past = (data.builds || []).map((b) =>
+          state.comparisonPeriod === "finalEight" && b.finalEight
+            ? { ...b, ...b.finalEight }
+            : b,
+        );
+        const name = el("input", {
+          required: true,
+          maxLength: 140,
+          placeholder: "Event name",
+        });
+        const when = el("input", {
+          required: true,
+          type: "date",
+          max: s.today,
+        });
+        const format = selection(["70.3", "140.6"], "70.3");
+        const add = () =>
+          modal(
+            "Add historical race",
+            formBox(
+              el(
+                "div",
+                { class: "fields" },
+                field("Race name", name, true),
+                field("Race date", when),
+                field("Distance", format),
+              ),
+              () => {
+                mutate(
+                  "race",
+                  {
+                    name: name.value.trim(),
+                    date: when.value,
+                    distance: format.value,
+                  },
+                  "Race added to historical comparisons.",
+                );
+              },
+            ),
+          );
+        const rows = past.map((b) => [
+          b.label,
+          shortDate(b.raceDate),
+          b.type,
+          duration(b.medianMinutes?.All),
+          duration(b.medianMinutes?.Swim),
+          duration(b.medianMinutes?.Bike),
+          duration(b.medianMinutes?.Run),
+          typeof b.coverage === "string" ? b.coverage : "—",
+        ]);
+        const detail = past.map((b) =>
+          el(
+            "details",
+            {},
+            el("summary", {}, b.label + " · weekly evidence"),
+            table(
+              [
+                "Week",
+                "Weeks to race",
+                "Swim",
+                "Bike",
+                "Run",
+                "Total",
+                "Coverage",
+              ],
+              (b.weeks || []).map((w) => [
+                shortDate(w.start) + " – " + shortDate(w.end),
+                num(w.weeksToRace),
+                duration(w.minutes?.Swim),
+                duration(w.minutes?.Bike),
+                duration(w.minutes?.Run),
+                duration(w.minutes?.All),
+                valueOr(w.coverage),
+              ]),
+            ),
+          ),
+        );
+        return panel(
+          "Past builds",
+          field("Comparison window", period),
+          text(
+            "Compare training at the same distance from each race. Weekly medians count swim, bike and run.",
+            "foot",
+          ),
+          past.length
+            ? table(
+                [
+                  "Build",
+                  "Race date",
+                  "Evidence",
+                  "Median total",
+                  "Swim",
+                  "Bike",
+                  "Run",
+                  "Coverage",
+                ],
+                rows,
+              )
+            : msg("Add a previous race to compare dated training blocks."),
+          detail,
+          writeBtn("Add historical race", add, "control"),
+        );
+      }
+      function raceProjection(s) {
+        const estimate = s.metrics?.raceEstimate || {};
+        const full = (seconds) => {
+          if (!finite(seconds)) return "—";
+          const n = Math.round(seconds);
+          return n >= 3600
+            ? Math.floor(n / 3600) +
+                ":" +
+                String(Math.floor(n / 60) % 60).padStart(2, "0") +
+                ":" +
+                String(n % 60).padStart(2, "0")
+            : Math.floor(n / 60) + ":" + String(n % 60).padStart(2, "0");
+        };
+        const legs = estimate.legs || [],
+          total = estimate.total;
+        const timeCells = (x) => [
+          full(x.lowSeconds),
+          full(x.centralSeconds),
+          full(x.highSeconds),
+        ];
+        const rows = legs.map((l) => [
+          l.leg,
+          ...timeCells(l),
+          valueOr(l.basis),
+          l.evidence?.length
+            ? el(
+                "div",
+                {},
+                l.evidence.map((e) =>
+                  btn(shortDate(e.date), () => openEvidence(e), "quiet"),
+                ),
+              )
+            : "—",
+        ]);
+        if (total)
+          rows.push([
+            "Total",
+            ...timeCells(total),
+            valueOr(estimate.status),
+            "",
+          ]);
+        const status =
+          typeof estimate.status === "string"
+            ? estimate.status
+            : "Awaiting race-specific evidence.";
+        return panel(
+          "Race-day estimate",
+          text(status, "muted"),
+          rows.length
+            ? table(
+                ["Leg", "Fast end", "Central", "Slow end", "Basis", "Evidence"],
+                rows,
+              )
+            : null,
+          estimate.note ? text(estimate.note, "foot") : null,
+          estimate.missing?.length
+            ? text(
+                "Still needed: " + estimate.missing.join(", "),
+                "small muted",
+              )
+            : null,
+          writeBtn("Log race evidence", () => raceEvidenceForm(s), "control"),
+        );
+      }
+      function raceEvidenceForm(s, selected) {
+        const activities = s.activities.filter(
+          (a) => s.week <= a.date && a.date < shift(s.week, 7),
+        );
+        if (!activities.length) {
+          modal(
+            "Log race evidence",
+            msg("Select a week with a recorded swim, ride, run or transition."),
+          );
+          return;
+        }
+        const recording = selection(
+          activities.map((a) => [a.id, shortDate(a.date) + " · " + a.name]),
+          selected?.id || activities[0].id,
+        );
+        const leg = selection(
+          ["Swim", "Bike", "Run", "T1", "T2"],
+          selected?.sport || activities[0].sport,
+        );
+        const seconds = el("input", {
+          type: "number",
+          required: true,
+          min: 1,
+          max: 86400,
+          step: 1,
+        });
+        const meters = el("input", {
+            type: "number",
+            min: 0,
+            max: 1000000,
+            step: "any",
+          }),
+          context = el("textarea", {
+            maxLength: 600,
+            required: true,
+            placeholder:
+              "Include conditions, effort and how the segment was measured.",
+          });
+        const confirm = el("input", { type: "checkbox" }),
+          hint = el("span");
+        const setLeg = () => {
+          if (leg.value === "Bike")
+            hint.textContent =
+              "This was an outdoor ride at sustainable race effort.";
+          else if (leg.value === "Run")
+            hint.textContent =
+              "This run followed a ride and was at sustainable 70.3 effort.";
+          else
+            hint.textContent =
+              "This was a measured race-rhythm segment or transition.";
+          confirm.required = true;
+          confirm.checked = false;
+          meters.required = !["T1", "T2"].includes(leg.value);
+        };
+        recording.onchange = () => {
+          const a = activities.find((a) => a.id === recording.value);
+          if (["Swim", "Bike", "Run"].includes(a?.sport)) leg.value = a.sport;
+          setLeg();
+        };
+        leg.onchange = setLeg;
+        setLeg();
+        modal(
+          "Log measured race evidence",
+          formBox(
+            el(
+              "div",
+              { class: "fields" },
+              field("Source activity", recording, true),
+              field("Leg", leg),
+              field("Segment duration (seconds)", seconds),
+              field("Measured distance (meters)", meters),
+              field("Conditions and measurement", context, true),
+              el("label", { class: "wide" }, confirm, " ", hint),
+            ),
+            () => {
+              const a = activities.find((a) => a.id === recording.value);
+              mutate(
+                "result",
+                {
+                  activityId: a.id,
+                  date: a.date,
+                  name: a.name,
+                  sport: leg.value,
+                  leg: leg.value,
+                  distanceMeters: Number(meters.value) || 0,
+                  seconds: Number(seconds.value),
+                  minutes: Number(seconds.value) / 60,
+                  context: context.value.trim(),
+                  source: "Athlete measured",
+                  outdoor: leg.value === "Bike",
+                  brick: leg.value === "Run",
+                },
+                "Evidence recorded.",
+              );
+            },
+          ),
+        );
+      }
+
+      function render() {
+        const s = state.snapshot;
+        if (!s) return;
+        nav();
+        const views = {
+          Week: overview,
+          Workouts: weekEntries,
+          "Training load": loadView,
+          Performance: performance,
+          "Race readiness": race,
+          Recovery: recovery,
+          "Weekly review": review,
+        };
+        $("view").replaceChildren(...views[state.tab](s).filter(Boolean));
+      }
+      gotoWeek();
+    </script>
+  </body>
+</html>
