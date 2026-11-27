@@ -1,4 +1,4 @@
-# Forge226 Coach — local plugin 0.11.0
+# Forge226 Coach — local plugin 0.12.0
 
 This package includes the coaching skill AND working data tools. Keep the complete folder together; SKILL.md alone cannot provide the integrations.
 
@@ -24,9 +24,17 @@ Built-in live Strava, official Garmin Personal API and dedicated Garmin uploads 
 
 Live access for other services uses a verified host connector when one is available. Otherwise the coach records the request and offers uploads or manual answers. Naming a provider does not create an API integration. Connections are optional and can be mixed freely with manual context. Disabling a source excludes it from future analysis/dashboard output but keeps history and does not itself revoke account authorization.
 
+## Track a training plan
+
+From the plugin folder on your Mac, run `sh bin/tracking.command` or `python3 server/tracker_web.py`. The tracker opens at http://127.0.0.1:48226 and reads your existing Forge226 athlete store. Use **Sync Garmin** to fetch new workouts and recovery. The same week view pairs your active plan with recorded sessions.
+
+Use **Training load** for estimated stress and CTL, ATL and TSB. Add dated test results under **Performance** to calibrate actual scores. Use **Race readiness** for rehearsal evidence and **Weekly review** for proposed adjustments. A proposed adjustment becomes a validated plan version after you approve it. The local plan link renders the current active version. A hosted plan remains a separate publication.
+
+The tracking service binds to this computer only. Private workouts, health readings and credentials stay in the local store. See [Garmin data, FIT setup, backups and optional scheduled sync](TRACKING-DATA.md).
+
 ## Garmin setup
 
-Provide an account export ZIP, activity JSON or CSV. The coach previews the file, shows coverage and unit handling, then imports it. Later exports upsert matching source IDs and retain other activities. Partial/ambiguous imports need resolution. FIT/TCX parsing is not implemented. Live Garmin access is available separately through the official Personal API.
+Provide an account export ZIP, activity JSON or CSV. The coach previews the file, shows coverage and unit handling, then imports it. Later exports upsert matching source IDs and retain other activities. Partial/ambiguous imports need resolution. The Tracker supports original FIT files via the Garmin SDK. Live Garmin access is available separately through the official Personal API.
 
 ## Garmin Personal API setup
 
@@ -50,7 +58,7 @@ The coach distinguishes first-time completion, performance and qualification goa
 
 Plans link sessions to measurable training blocks with checkpoints and explicit conditions to progress, repeat or reduce. Weekly reviews combine execution, recovery and schedule changes into a saved decision. The dashboard shows priorities, checkpoint results, benchmark history and why the plan changed. Existing saved plans remain readable and gain the new coaching fields on revision.
 
-The analysis tools calculate coverage-qualified completed-week comparisons, benchmark history and conservative session-match candidates. Missing evidence does not become a missed workout. Optional normalized JSON lap analysis supports weighted segment comparisons, but does not fetch streams, parse FIT or establish physiological readiness. Exports preserve the saved coaching interpretation alongside newly calculated evidence.
+The analysis tools calculate coverage-qualified completed-week comparisons, benchmark history and conservative session-match candidates. Missing evidence does not become a missed workout. Optional normalized JSON lap analysis supports weighted segment comparisons, and the tracker can separately import original FIT streams. Physiological readiness remains a coaching judgment. Exports preserve the saved coaching interpretation alongside newly calculated evidence.
 
 ## Plan changes and dashboards
 
