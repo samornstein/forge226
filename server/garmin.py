@@ -1,6 +1,7 @@
 """Official Garmin Personal API, local key entry and read-only on-request sync."""
 import base64,json,math,time,threading,secrets,hashlib,html,urllib.request,urllib.parse,urllib.error
-from datetime import datetime,date,timedelta
+from datetime import datetime,date,timedelta,timezone
+from email.utils import parsedate_to_datetime
 from zoneinfo import ZoneInfo
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from strava import Secrets,ApiError
@@ -10,22 +11,31 @@ from imports import normalize,num
 HOSTS={'global':'https://personal.connectapi.garmin.com','china':'https://personal.connectapi.garmin.cn'}
 TOKEN_PATH='/personalapitoken-service/personal-api/personal-api-key/token'
 class GarminError(ApiError):
- def __init__(self,message,status=None):super().__init__(message);self.status=status
+ def __init__(self,message,status=None,retry_after=None):super().__init__(message);self.status=status;self.retry_after=retry_after
 class NoRedirect(urllib.request.HTTPRedirectHandler):
  def redirect_request(self,*args,**kwargs):raise GarminError('Garmin redirect refused; no credentials forwarded.')
-def request(method,url,authorization,text=False):
+def request(method,url,authorization,text=False,binary=False):
  parsed=urllib.parse.urlsplit(url)
  if parsed.scheme!='https' or parsed.netloc not in ('personal.connectapi.garmin.com','personal.connectapi.garmin.cn') or parsed.username or parsed.fragment:raise GarminError('Unsupported Garmin API destination')
- req=urllib.request.Request(url,method=method,headers={'Authorization':authorization,'Accept':'text/plain' if text else 'application/json','User-Agent':'Forge226Local/0.11.0'})
+ req=urllib.request.Request(url,method=method,headers={'Authorization':authorization,'Accept':'*/*' if binary else ('text/plain' if text else 'application/json'),'User-Agent':'Forge226Local/0.11.0'})
  try:
   with urllib.request.build_opener(NoRedirect(), https_handler()).open(req,timeout=25) as response:
    if response.status==204:return None
-   raw=response.read(16*1024*1024+1)
-   if len(raw)>16*1024*1024:raise GarminError('Garmin response exceeds size limit')
+   limit = (64 if binary else 16) * 1024 * 1024
+   raw=response.read(limit+1)
+   if len(raw)>limit:raise GarminError('Garmin response exceeds size limit')
+   if binary:return raw
    return raw.decode().strip() if text else json.loads(raw)
  except urllib.error.HTTPError as e:
-  message='Garmin key/token rejected; replace the key through local setup.' if e.code in (401,403,404) else 'Garmin rate limit reached; retry later.' if e.code==429 else 'Garmin request failed; retry later.'
-  raise GarminError(message,e.code) from None
+  message='Garmin has no original file for this activity.' if binary and e.code==404 else 'Garmin key/token rejected; replace the key through local setup.' if e.code in (401,403,404) else 'Garmin rate limit reached; retry later.' if e.code==429 else 'Garmin request failed; retry later.'
+  retry=None
+  if e.code==429:
+   header=e.headers.get('Retry-After','').strip()
+   try:
+    expires=datetime.now(timezone.utc)+timedelta(seconds=int(header)) if header.isdigit() else parsedate_to_datetime(header)
+    if expires.tzinfo and expires>datetime.now(timezone.utc):retry=expires.astimezone(timezone.utc).isoformat()
+   except (ValueError,OverflowError,TypeError):pass
+  raise GarminError(message,e.code,retry) from None
  except (urllib.error.URLError,TimeoutError) as exc:raise GarminError(network_error('Garmin',exc)) from None
  except (UnicodeError,ValueError):raise GarminError('Unexpected Garmin response format; no new data saved.') from None
 
@@ -81,14 +91,15 @@ class Garmin:
    if force or c['expires_at']<time.time()+3600:
     t,exp=self._new_token(c['api_key'],c['region']);c.update(access_token=t,expires_at=exp);self.vault.put('garmin-'+aid,c)
    return c['access_token']
- def get(self,aid,path,query=None):
+ def get(self,aid,path,query=None,*,binary=False):
   c=self.vault.get('garmin-'+aid)
   if not c:raise GarminError('Connect Garmin first.')
   url=HOSTS[c['region']]+path+('?' +urllib.parse.urlencode(query) if query else '')
-  try:return self.http('GET',url,'Bearer '+self.token(aid))
+  opts={'binary':True} if binary else {}
+  try:return self.http('GET',url,'Bearer '+self.token(aid),**opts)
   except GarminError as e:
    if e.status!=401:raise
-   return self.http('GET',url,'Bearer '+self.token(aid,True))
+   return self.http('GET',url,'Bearer '+self.token(aid,True),**opts)
  def check_owner(self,aid,uid):
   expected=self.vault.get('garmin-'+aid)['user_id']
   if uid is not None and uid!=expected:raise GarminError('Garmin account identity mismatch; no records committed.')
@@ -110,13 +121,18 @@ class Garmin:
    else:raise GarminError('More than 2,000 activities; choose a smaller sync window. Existing history retained.')
    parent_ids={row.get('parentId') for row in raw if row.get('parentId')}
    rows=[normalize(r,athlete['timezone'],'seconds_meters','Garmin Personal API') for r in raw if r.get('activityId') not in parent_ids]
+   parents={str(r['activityId']):str(r['parentId']) for r in raw if r.get('activityId') and r.get('parentId')}
+   for row in rows:
+    if row['sourceId'] in parents:row['multisportGroup']='garmin:'+parents[row['sourceId']]
    receipt={'source':'garmin','method':'official Personal API','coverage':{'first':start.isoformat(),'last':end.isoformat()},'pages':pages,'complete':True,'multisportParentsExcluded':len(raw)-len(rows),'saved':len(rows),'syncedAt':now()}
    if rows:receipt=self.store.ingest(aid,'garmin',rows,receipt,hashlib.sha256(json.dumps(rows,sort_keys=True).encode()).hexdigest())
+   from tracker_import import archive_summaries
+   archive_summaries(self.store,aid,raw,rows)
    self.store.set_provider_sync(aid,'garmin',receipt);return receipt
- def sync_wellness(self,aid,days=28):
+ def sync_wellness(self,aid,days=28,extended=False):
   athlete=self.store.athlete(aid)
   if isinstance(days,bool) or not isinstance(days,int) or not 1<=days<=90:raise ValueError('wellness days must be 1–90')
-  end=datetime.now(ZoneInfo(athlete['timezone'])).date();start=end-timedelta(days=days-1);cursor=start;rows=[]
+  end=datetime.now(ZoneInfo(athlete['timezone'])).date();start=end-timedelta(days=days-1);cursor=start;rows=[];originals=[]
   with self.lock:
    while cursor<=end:
     stop=min(cursor+timedelta(days=30),end)
@@ -131,6 +147,7 @@ class Garmin:
       day=date.fromisoformat(r['calendarDate']).isoformat()
       if not cursor.isoformat()<=day<=stop.isoformat():raise GarminError('Garmin wellness record outside requested range')
       self.check_owner(aid,r.get('userProfilePK'))
+      originals.append((kind,r))
       sid=kind+':'+day;out={'id':'garmin:'+sid,'sourceId':sid,'source':'garmin','recordKind':'wellness','date':day,'method':'official Personal API','units':{}}
       if kind=='sleep':
        n=num(r.get('sleepTimeSeconds'))
@@ -144,7 +161,13 @@ class Garmin:
     cursor=stop+timedelta(days=1)
    rows=list({r['sourceId']:r for r in rows}.values());receipt={'source':'garmin','recordKind':'wellness','method':'official Personal API sleep and overnight HRV','coverage':{'first':start.isoformat(),'last':end.isoformat()},'saved':len(rows),'complete':True,'syncedAt':now()}
    if rows:receipt=self.store.ingest(aid,'garmin',rows,receipt,hashlib.sha256(json.dumps(rows,sort_keys=True).encode()).hexdigest(),'wellness')
-   self.store.set_provider_sync(aid,'garmin-wellness',receipt);return receipt
+   from tracker_import import archive_wellness
+   archive_wellness(self.store,aid,originals)
+   self.store.set_provider_sync(aid,'garmin-wellness',receipt)
+   if extended:
+    from tracker_import import sync_daily_health
+    return dict(receipt,dailyHealth=sync_daily_health(self,aid,start,end))
+   return receipt
  def disconnect(self,aid):
   self.store.athlete(aid)
   with self.lock:self.vault.remove('garmin-'+aid)

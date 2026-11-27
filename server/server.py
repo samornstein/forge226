@@ -17,8 +17,10 @@ from render_dashboard import render
 
 S={'type':'string'};I={'type':'integer'};O={'type':'object'}
 def spec(name,description,props,required=(),read=True):
- return {'name':'forge226_'+name,'description':description,'inputSchema':{'type':'object','properties':props,'required':list(required),'additionalProperties':False},'annotations':{'readOnlyHint':read,'destructiveHint':False,'openWorldHint':name in ('strava_connect','strava_sync','strava_disconnect','garmin_connect','garmin_sync','garmin_sync_wellness','garmin_sync_all')}}
+ return {'name':'forge226_'+name,'description':description,'inputSchema':{'type':'object','properties':props,'required':list(required),'additionalProperties':False},'annotations':{'readOnlyHint':read,'destructiveHint':False,'openWorldHint':name in ('strava_connect','strava_sync','strava_disconnect','garmin_connect','garmin_sync','garmin_sync_wellness','garmin_sync_all','tracking_sync')}}
 TOOLS=[
+ spec('tracking_review','Read the private weekly training review, compliance, next actions and saved lessons.',{'athlete_id':S,'week':S},('athlete_id',)),
+ spec('tracking_sync','Sync Garmin activities, original FITs and available wellness into local tracking storage.',{'athlete_id':S,'days':I,'detail_limit':I},('athlete_id',),False),
  spec('status','Inspect runtime and available integrations. Does not expose credentials.',{}),
  spec('sources','Read source preferences and actual built-in connection capabilities. Upload or external labels do not mean a live connection is established.',{'athlete_id':S},('athlete_id',)),
  spec('configure_source','Remember provider choice and enabled state. Modes: manual (manual-only coaching, disables other source preferences), upload, native (Strava or Garmin), external (host-managed connector), requested (no integration yet). Does not grant account access or revoke tokens.',{'athlete_id':S,'provider':S,'mode':{'type':'string','enum':['manual','upload','native','external','requested']},'enabled':{'type':'boolean'}},('athlete_id','provider','mode','enabled'),False),
@@ -91,7 +93,15 @@ class App:
   if not tool:raise ValueError('Unknown tool')
   validate_args(args,tool['inputSchema']);a=args;aid=a.get('athlete_id');n=name.removeprefix('forge226_')
   if aid:self.store.athlete(aid)
-  if n=='status':return {'version':'0.11.0','storage':str(self.store.root),'athletes':len(self.store.athletes()),'garmin':'Official Personal API plus ZIP/JSON/CSV uploads','strava':'Local read-only OAuth; configuration and user consent required','genericImport':'Explicitly mapped CSV/JSON/ZIP workouts or wellness from any source; no universal live API','optionalData':True,'fitTcx':'Not yet supported','persistence':'Local SQLite plus separate restricted credentials; no cloud sync','garminLimits':{'activityDays':730,'activityRecordLimit':2000,'wellnessDays':90,'wellnessFields':['sleepHours','hrvMs']},'calendarViews':['month','week','day']}
+  if n=='tracking_review':
+   from tracker import read_snapshot
+   report=read_snapshot(self,aid,a.get('week'))
+   return {k:report[k] for k in ('week','version','freshness','totals','alerts','review','proposals','lessons','readiness')}
+  if n=='tracking_sync':
+   from tracker_import import sync_tracker
+   self.require_source(aid,'garmin')
+   return sync_tracker(self.garmin,aid,a.get('days'),a.get('detail_limit',12))
+  if n=='status':return {'version':'0.12.0','storage':str(self.store.root),'athletes':len(self.store.athletes()),'garmin':'Official Personal API plus ZIP/JSON/CSV uploads','strava':'Local read-only OAuth; configuration and user consent required','genericImport':'Explicitly mapped CSV/JSON/ZIP workouts or wellness from any source; no universal live API','optionalData':True,'fitTcx':'FIT available in private tracker with Garmin FIT SDK; TCX unsupported','persistence':'Local SQLite plus separate restricted credentials; no cloud sync','garminLimits':{'activityDays':730,'activityRecordLimit':2000,'wellnessDays':90,'wellnessFields':['sleepHours','hrvMs']},'calendarViews':['month','week','day']}
   if n=='compare_builds':
    from analysis import compare_builds
    return compare_builds(self.enabled_records(aid),a['windows'])
@@ -162,7 +172,10 @@ class App:
    if activity is None:raise ValueError('Activity is unavailable for this athlete or its source is disabled')
    return analyze_laps(a['path'],activity,a.get('comparison'))
   if n=='save_checkin':return self.store.checkin(aid,a['checkin'])
-  if n=='get_context':return {'athlete':self.store.athlete(aid),'activeVersion':self.store.active_version(aid),'versions':self.versions(aid),'checkins':self.store.checkins(aid),'imports':self.store.receipts(aid),'strava':self.strava.status(aid),'sources':self.source_context(aid)}
+  if n=='get_context':
+   from tracker import entries
+   lessons=sorted(entries(self.store,aid)['lesson'].values(),key=lambda row:row['date'],reverse=True)[:12]
+   return {'athlete':self.store.athlete(aid),'activeVersion':self.store.active_version(aid),'trackingLessons':lessons,'versions':self.versions(aid),'checkins':self.store.checkins(aid),'imports':self.store.receipts(aid),'strava':self.strava.status(aid),'sources':self.source_context(aid)}
   if n=='review_progressions':
    from plan_workflow import progression_summary
    plan=self.store.plan(aid,a.get('version'))
@@ -237,7 +250,7 @@ def main():
     if ident is None:continue
     if method=='initialize':
      requested=params.get('protocolVersion');version=requested if requested in ('2024-11-05','2025-03-26','2025-06-18','2025-11-25') else '2025-06-18'
-     result={'protocolVersion':version,'capabilities':{'tools':{'listChanged':False}},'serverInfo':{'name':'forge226','version':'0.11.0'},'instructions':'Start with forge226_status and list_athletes. Keep credentials outside conversation. Never activate a plan without athlete authorization.'}
+     result={'protocolVersion':version,'capabilities':{'tools':{'listChanged':False}},'serverInfo':{'name':'forge226','version':'0.12.0'},'instructions':'Start with forge226_status and list_athletes. Keep credentials outside conversation. Never activate a plan without athlete authorization.'}
     elif method=='ping':result={}
     elif method=='tools/list':result={'tools':TOOLS}
     elif method=='tools/call':
